@@ -1,16 +1,30 @@
 import React, { useState } from 'react';
 
 export default function HomePage() {
+  const [category, setCategory] = useState('');
   const [width, setWidth] = useState('');
   const [length, setLength] = useState('');
-  const [price, setPrice] = useState(null);
+  const [price, setPrice] = useState<number | null>(null);
 
   const calculatePrice = () => {
     const w = parseFloat(width);
     const l = parseFloat(length);
-    if (!isNaN(w) && !isNaN(l)) {
+    if (!isNaN(w) && !isNaN(l) && category) {
       const area = w * l;
-      const unitPrice = 500; // базова ціна за квадратний метр
+      let unitPrice = 0;
+      switch (category) {
+        case 'budget':
+          unitPrice = 300;
+          break;
+        case 'standard':
+          unitPrice = 500;
+          break;
+        case 'premium':
+          unitPrice = 800;
+          break;
+        default:
+          unitPrice = 0;
+      }
       setPrice(area * unitPrice);
     } else {
       setPrice(null);
@@ -31,6 +45,15 @@ export default function HomePage() {
         </nav>
       </header>
       <main>
+        <section>
+          <h2>Виберіть тип килима</h2>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">Оберіть категорію</option>
+            <option value="budget">Бюджетний</option>
+            <option value="standard">Середній</option>
+            <option value="premium">Преміум</option>
+          </select>
+        </section>
         <section>
           <h2>Розрахунок ціни килима</h2>
           <div>
