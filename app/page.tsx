@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 
 export default function HomePage() {
@@ -5,6 +6,8 @@ export default function HomePage() {
   const [width, setWidth] = useState('');
   const [length, setLength] = useState('');
   const [price, setPrice] = useState<number | null>(null);
+  const [minPrice, setMinPrice] = useState(100);
+  const [maxPrice, setMaxPrice] = useState(1000);
 
   const calculatePrice = () => {
     const w = parseFloat(width);
@@ -53,6 +56,31 @@ export default function HomePage() {
             <option value="standard">Середній</option>
             <option value="premium">Преміум</option>
           </select>
+        </section>
+        <section>
+          <h2>Фільтр за ціною</h2>
+          <div>
+            <label>Мінімальна ціна: {minPrice} грн</label>
+            <input
+              type="range"
+              min="100"
+              max="5000"
+              step="50"
+              value={minPrice}
+              onChange={(e) => setMinPrice(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Максимальна ціна: {maxPrice} грн</label>
+            <input
+              type="range"
+              min="100"
+              max="5000"
+              step="50"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+            />
+          </div>
         </section>
         <section>
           <h2>Розрахунок ціни килима</h2>
