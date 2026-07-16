@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Header() {
   return (
     <header
@@ -24,10 +25,29 @@ export default function Header() {
             padding: 0,
           }}
         >
-          <li>Головна</li>
-          <li>Каталог</li>
-          <li>Калькулятор</li>
-          <li>Контакти</li>
+          <li>
+  <Link href="/" style={{ color: "#fff", textDecoration: "none" }}>
+    Головна
+  </Link>
+</li>
+
+<li>
+  <Link href="/catalog" style={{ color: "#fff", textDecoration: "none" }}>
+    Каталог
+  </Link>
+</li>
+
+<li>
+  <Link href="/cart" style={{ color: "#fff", textDecoration: "none" }}>
+    🛒 Кошик
+  </Link>
+</li>
+
+<li>
+  <Link href="/" style={{ color: "#fff", textDecoration: "none" }}>
+    Контакти
+  </Link>
+</li>
         </ul>
       </nav>
     </header>
