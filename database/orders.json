@@ -1,0 +1,844 @@
+[
+  {
+    "id": 6,
+    "orderNumber": 6,
+    "createdAt": "2026-07-18T13:39:02.225Z",
+    "status": "completed",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 9360,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 9360,
+    "area": 23.4,
+    "items": [
+      {
+        "name": "Лоза",
+        "image": "/products/1784312268984-b0mse3-photo-28-2026-07-16-22-18-59.jpg",
+        "color": "червона",
+        "width": 4,
+        "length": 5.85,
+        "area": 23.4,
+        "quantity": 1,
+        "price": 9360
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "orderNumber": 7,
+    "createdAt": "2026-07-18T13:50:52.544Z",
+    "status": "completed",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Передоплата 200 грн",
+    "paidAmount": 200,
+    "amountDue": 760,
+    "comment": "Без коментаря",
+    "total": 960,
+    "area": 2.4000000000000004,
+    "items": [
+      {
+        "name": "Лоза",
+        "image": "/products/1784312268980-d9hwod-photo-26-2026-07-16-22-18-59.jpg",
+        "color": "Синій",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 2,
+        "price": 320
+      },
+      {
+        "name": "Мармур беживий",
+        "image": "/products/1784311891515-v20th7-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежево-коричневий",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "orderNumber": 8,
+    "createdAt": "2026-07-18T13:53:53.183Z",
+    "status": "processing",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Передоплата 200 грн",
+    "paidAmount": 200,
+    "amountDue": 5800,
+    "comment": "Без коментаря",
+    "total": 6000,
+    "area": 15,
+    "items": [
+      {
+        "name": "Мармур беживий",
+        "image": "/products/1784311891515-v20th7-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежево-коричневий",
+        "width": 2,
+        "length": 2.5,
+        "area": 5,
+        "quantity": 3,
+        "price": 2000
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "orderNumber": 9,
+    "createdAt": "2026-07-18T13:55:26.660Z",
+    "status": "completed",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 3200,
+    "comment": "зробіть ріно підари бо вам пезда",
+    "total": 3200,
+    "area": 8,
+    "items": [
+      {
+        "name": "Мармур беживий",
+        "image": "/products/1784311891515-v20th7-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежево-коричневий",
+        "width": 2,
+        "length": 2.5,
+        "area": 5,
+        "quantity": 1,
+        "price": 2000
+      },
+      {
+        "name": "Мармур беживий",
+        "image": "/products/1784311891515-v20th7-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежево-коричневий",
+        "width": 1,
+        "length": 3,
+        "area": 3,
+        "quantity": 1,
+        "price": 1200
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "orderNumber": 10,
+    "createdAt": "2026-07-18T13:56:44.028Z",
+    "status": "processing",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 960,
+    "comment": "уікпкір",
+    "total": 960,
+    "area": 2.4000000000000004,
+    "items": [
+      {
+        "name": "Лоза",
+        "image": "/products/1784312268980-d9hwod-photo-26-2026-07-16-22-18-59.jpg",
+        "color": "Синій",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      },
+      {
+        "name": "Лоза",
+        "image": "/products/1784312268982-1mhugw-photo-27-2026-07-16-22-18-59.jpg",
+        "color": "зелений",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      },
+      {
+        "name": "Лоза",
+        "image": "/products/1784312268984-b0mse3-photo-28-2026-07-16-22-18-59.jpg",
+        "color": "червона",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "orderNumber": 11,
+    "createdAt": "2026-07-18T15:32:25.959Z",
+    "status": "completed",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 900000,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 900000,
+    "area": 2250,
+    "items": [
+      {
+        "name": "Мармур Беж",
+        "image": "/products/1784387211541-ng389a-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 150,
+        "length": 15,
+        "area": 2250,
+        "quantity": 1,
+        "price": 900000
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "orderNumber": 12,
+    "createdAt": "2026-07-18T15:35:09.369Z",
+    "status": "completed",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 38528,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 38528,
+    "area": 92,
+    "items": [
+      {
+        "name": "пв",
+        "image": "/products/1784388861166-6rvewd-photo-8-2026-07-16-22-18-59.jpg",
+        "color": "беж",
+        "width": 1,
+        "length": 12,
+        "area": 12,
+        "quantity": 1,
+        "price": 6528
+      },
+      {
+        "name": "Мармур Беж",
+        "image": "/products/1784387211541-ng389a-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 80,
+        "length": 1,
+        "area": 80,
+        "quantity": 1,
+        "price": 32000
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "orderNumber": 13,
+    "createdAt": "2026-07-18T18:28:38.333Z",
+    "status": "new",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 960,
+    "comment": "Без коментаря",
+    "total": 960,
+    "area": 2.4000000000000004,
+    "items": [
+      {
+        "name": "Стрічка",
+        "image": "/products/1784394538410-q1vce8-photo-16-2026-07-16-22-18-59.jpg",
+        "color": "коричневий",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 3,
+        "price": 320
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "orderNumber": 14,
+    "createdAt": "2026-07-18T18:44:54.019Z",
+    "status": "new",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 2208,
+    "amountDue": 0,
+    "comment": "рівний оверлок зробіть будь ласка  мій господин",
+    "total": 2208,
+    "area": 4.8,
+    "items": [
+      {
+        "name": "Стрічка",
+        "image": "/products/1784394538410-q1vce8-photo-16-2026-07-16-22-18-59.jpg",
+        "color": "коричневий",
+        "width": 0.8,
+        "length": 3.5,
+        "area": 2.8,
+        "quantity": 1,
+        "price": 1120
+      },
+      {
+        "name": "пв",
+        "image": "/products/1784388861166-6rvewd-photo-8-2026-07-16-22-18-59.jpg",
+        "color": "беж",
+        "width": 1,
+        "length": 2,
+        "area": 2,
+        "quantity": 1,
+        "price": 1088
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "orderNumber": 15,
+    "createdAt": "2026-07-19T06:14:43.468Z",
+    "status": "new",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 1920,
+    "comment": "Без коментаря",
+    "total": 1920,
+    "area": 4.8,
+    "items": [
+      {
+        "name": "Стрічка",
+        "image": "/products/1784394538410-q1vce8-photo-16-2026-07-16-22-18-59.jpg",
+        "color": "коричневий",
+        "width": 0.8,
+        "length": 6,
+        "area": 4.8,
+        "quantity": 1,
+        "price": 1920
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "orderNumber": 16,
+    "createdAt": "2026-07-19T06:59:02.083Z",
+    "status": "new",
+    "accessToken": "54d2fe73-6389-4ab1-b500-7ece583cde50",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 61600,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 61600,
+    "area": 145,
+    "items": [
+      {
+        "name": "Мармур Беж",
+        "image": "/products/1784387211541-ng389a-photo-6-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 120,
+        "length": 1,
+        "area": 120,
+        "quantity": 1,
+        "price": 48000
+      },
+      {
+        "name": "пв",
+        "image": "/products/1784388861166-6rvewd-photo-8-2026-07-16-22-18-59.jpg",
+        "color": "беж",
+        "width": 1,
+        "length": 25,
+        "area": 25,
+        "quantity": 1,
+        "price": 13600
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "orderNumber": 17,
+    "createdAt": "2026-07-19T12:21:48.174Z",
+    "status": "new",
+    "accessToken": "2be02c1b-4124-47c9-a2ec-7c64bae82c13",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Самовивіз",
+    "city": "Самовивіз",
+    "warehouse": "Самовивіз",
+    "paymentMethod": "Передоплата 200 грн",
+    "paidAmount": 200,
+    "amountDue": 5720,
+    "comment": "локитр",
+    "total": 5920,
+    "area": 14.8,
+    "items": [
+      {
+        "name": "ДАРНИЧАНКА",
+        "image": "/products/1784463629054-jirl0e-photo-25-2026-07-16-22-18-59.jpg",
+        "color": "Зелений",
+        "width": 2,
+        "length": 3.7,
+        "area": 7.4,
+        "quantity": 2,
+        "price": 2960
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "orderNumber": 18,
+    "createdAt": "2026-07-20T16:59:10.921Z",
+    "status": "new",
+    "accessToken": "346dfa6d-451c-4883-be6b-f43c49e1d48c",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 14309.6,
+    "amountDue": 0,
+    "comment": "уца",
+    "total": 14309.6,
+    "area": 34.019999999999996,
+    "items": [
+      {
+        "name": "Піксель",
+        "image": "/products/1784562557386-kfv615-photo-2026-07-20-17-01-56.jpg",
+        "color": "СІРИЙ",
+        "width": 0.8,
+        "length": 4.6,
+        "area": 3.68,
+        "quantity": 1,
+        "price": 1674.4
+      },
+      {
+        "name": "Поле квітів",
+        "image": "/products/1784463629054-jirl0e-photo-25-2026-07-16-22-18-59.jpg",
+        "color": "Червоний",
+        "width": 4,
+        "length": 5.5,
+        "area": 22,
+        "quantity": 1,
+        "price": 8800
+      },
+      {
+        "name": "НАТУРА ЗАВИТОК",
+        "image": "/products/1784565200578-8lnubq-photo-2026-07-20-19-28-09.jpg",
+        "color": "Сірий",
+        "width": 1.2,
+        "length": 3.2,
+        "area": 3.84,
+        "quantity": 1,
+        "price": 2035.2
+      },
+      {
+        "name": "Дарничанка",
+        "image": "/products/1784561910999-5feagj-photo-2026-07-20-17-00-10.jpg",
+        "color": "Синій",
+        "width": 1.5,
+        "length": 3,
+        "area": 4.5,
+        "quantity": 1,
+        "price": 1800
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "orderNumber": 19,
+    "createdAt": "2026-07-20T17:17:32.550Z",
+    "status": "new",
+    "accessToken": "c35b4eb6-3faf-4cd1-95e0-90298f18d246",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 7492,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 7492,
+    "area": 16.8,
+    "items": [
+      {
+        "name": "Поле квітів",
+        "image": "/products/1784463629054-jirl0e-photo-25-2026-07-16-22-18-59.jpg",
+        "color": "Червоний",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      },
+      {
+        "name": "НАТУРА ЗАВИТОК",
+        "image": "/products/1784565200578-8lnubq-photo-2026-07-20-19-28-09.jpg",
+        "color": "Сірий",
+        "width": 0.8,
+        "length": 7,
+        "area": 5.6,
+        "quantity": 1,
+        "price": 2968
+      },
+      {
+        "name": "Дарничанка",
+        "image": "/products/1784561910999-5feagj-photo-2026-07-20-17-00-10.jpg",
+        "color": "Синій",
+        "width": 0.8,
+        "length": 12,
+        "area": 9.6,
+        "quantity": 1,
+        "price": 3840
+      },
+      {
+        "name": "Піксель",
+        "image": "/products/1784562557386-kfv615-photo-2026-07-20-17-01-56.jpg",
+        "color": "СІРИЙ",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 364
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "orderNumber": 20,
+    "createdAt": "2026-07-20T17:22:07.919Z",
+    "status": "new",
+    "accessToken": "8a0c5174-9871-4736-909a-49052216d0c9",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 32895,
+    "amountDue": 0,
+    "comment": "куап",
+    "total": 32895,
+    "area": 76.5,
+    "items": [
+      {
+        "name": "НАТУРА ЗАВИТОК",
+        "image": "/products/1784565200580-7qcyjn-photo-2026-07-20-19-27-58.jpg",
+        "color": "Коричневий",
+        "width": 1.5,
+        "length": 5,
+        "area": 7.5,
+        "quantity": 1,
+        "price": 3975
+      },
+      {
+        "name": "Стрічка",
+        "image": "/products/1784394538410-q1vce8-photo-16-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 4,
+        "length": 5.25,
+        "area": 21,
+        "quantity": 2,
+        "price": 8400
+      },
+      {
+        "name": "Дарничанка",
+        "image": "/products/1784561910999-5feagj-photo-2026-07-20-17-00-10.jpg",
+        "color": "Синій",
+        "width": 1.5,
+        "length": 2,
+        "area": 3,
+        "quantity": 1,
+        "price": 1200
+      },
+      {
+        "name": "Піксель",
+        "image": "/products/1784562557386-kfv615-photo-2026-07-20-17-01-56.jpg",
+        "color": "СІРИЙ",
+        "width": 4,
+        "length": 6,
+        "area": 24,
+        "quantity": 1,
+        "price": 10920
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "orderNumber": 21,
+    "createdAt": "2026-07-20T17:29:24.371Z",
+    "status": "new",
+    "accessToken": "5230ab42-b0f9-4825-91dd-574a3a450235",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 12306.25,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 12306.25,
+    "area": 27.75,
+    "items": [
+      {
+        "name": "Поле квітів",
+        "image": "/products/1784463629054-jirl0e-photo-25-2026-07-16-22-18-59.jpg",
+        "color": "Червоний",
+        "width": 1.2,
+        "length": 5,
+        "area": 6,
+        "quantity": 1,
+        "price": 2400
+      },
+      {
+        "name": "Піксель",
+        "image": "/products/1784562557386-kfv615-photo-2026-07-20-17-01-56.jpg",
+        "color": "СІРИЙ",
+        "width": 2.5,
+        "length": 3.1,
+        "area": 7.75,
+        "quantity": 1,
+        "price": 3526.25
+      },
+      {
+        "name": "НАТУРА ЗАВИТОК",
+        "image": "/products/1784565200580-7qcyjn-photo-2026-07-20-19-27-58.jpg",
+        "color": "Коричневий",
+        "width": 1.5,
+        "length": 4,
+        "area": 6,
+        "quantity": 1,
+        "price": 3180
+      },
+      {
+        "name": "Дарничанка",
+        "image": "/products/1784561910999-5feagj-photo-2026-07-20-17-00-10.jpg",
+        "color": "Синій",
+        "width": 2,
+        "length": 4,
+        "area": 8,
+        "quantity": 1,
+        "price": 3200
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "orderNumber": 22,
+    "createdAt": "2026-07-20T17:33:39.838Z",
+    "status": "processing",
+    "accessToken": "159dbb8f-34af-4953-acd3-53978b007686",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 640,
+    "comment": "Без коментаря",
+    "total": 640,
+    "area": 1.6,
+    "items": [
+      {
+        "name": "Поле квітів",
+        "image": "/products/1784463629054-jirl0e-photo-25-2026-07-16-22-18-59.jpg",
+        "color": "Червоний",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      },
+      {
+        "name": "Дарничанка",
+        "image": "/products/1784561910999-5feagj-photo-2026-07-20-17-00-10.jpg",
+        "color": "Синій",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "orderNumber": 23,
+    "createdAt": "2026-07-21T20:49:40.871Z",
+    "status": "completed",
+    "accessToken": "db5520d7-1e7d-4a02-ac18-9eabd21e82a2",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 37200,
+    "amountDue": 0,
+    "comment": "Без коментаря",
+    "total": 37200,
+    "area": 93,
+    "items": [
+      {
+        "name": "Поле квітів",
+        "image": "/products/1784463629054-jirl0e-photo-25-2026-07-16-22-18-59.jpg",
+        "color": "Червоний",
+        "width": 4,
+        "length": 14,
+        "area": 56,
+        "quantity": 1,
+        "price": 22400
+      },
+      {
+        "name": "Linea",
+        "image": "/products/1784579167166-zdigof-photo-6-2026-07-20-22-28-09.jpg",
+        "color": "сірий",
+        "width": 2,
+        "length": 4.5,
+        "area": 9,
+        "quantity": 1,
+        "price": 3600
+      },
+      {
+        "name": "Кільця",
+        "image": "/products/1784578306395-ih6hf7-photo-29-2026-07-16-22-18-59.jpg",
+        "color": "червона",
+        "width": 4,
+        "length": 7,
+        "area": 28,
+        "quantity": 1,
+        "price": 11200
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "orderNumber": 24,
+    "createdAt": "2026-07-21T20:58:33.479Z",
+    "status": "shipped",
+    "accessToken": "0c11e2a4-d6df-48d9-a0b6-46af59fba71f",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Повна оплата",
+    "paidAmount": 318240,
+    "amountDue": 0,
+    "comment": "ЗРОБЫТЬ РЫВНО ПЫДАРИ БО ВАМ ПЕЗДА",
+    "total": 318240,
+    "area": 795.6,
+    "items": [
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 4,
+        "length": 198.9,
+        "area": 795.6,
+        "quantity": 1,
+        "price": 318240
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "orderNumber": 25,
+    "createdAt": "2026-07-24T16:26:58.566Z",
+    "status": "new",
+    "accessToken": "998f2459-76e4-4545-848c-98f7a783b246",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 2000,
+    "comment": "ро",
+    "total": 2000,
+    "area": 5,
+    "items": [
+      {
+        "name": "Кільця",
+        "image": "/products/1784578246624-7b7e1k-photo-31-2026-07-16-22-18-59.jpg",
+        "color": "зелений",
+        "width": 2,
+        "length": 2.5,
+        "area": 5,
+        "quantity": 1,
+        "price": 2000
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "orderNumber": 26,
+    "createdAt": "2026-07-27T15:18:36.854Z",
+    "status": "processing",
+    "accessToken": "64bee215-f70c-48a1-8d58-1e05590269c7",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 320,
+    "comment": "Без коментаря",
+    "total": 320,
+    "area": 0.8,
+    "items": [
+      {
+        "name": "Versal",
+        "image": "/products/1784578934075-70xqi1-photo-1-2026-07-16-22-18-59.jpg",
+        "color": "коричневий",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      }
+    ],
+    "updatedAt": "2026-07-27T15:21:54.920Z",
+    "statusUpdatedAt": "2026-07-27T15:21:54.920Z"
+  }
+]

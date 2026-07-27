@@ -1,102 +1,356 @@
-"use client";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
-import { useParams } from "next/navigation";
-import { useCart } from "../../../context/CartContext";
+import ProductDetails from "../../../components/ProductDetails";
+import { getAllProducts } from "../../../lib/getAllProducts";
+import type { Product } from "../../../types/product";
 
-interface Carpet {
-  id: number;
-  name: string;
-  price: number;
-  description: string;
+export const dynamic = "force-dynamic";
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  "http://localhost:3000";
+
+type ProductPageProps = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+function cleanText(text: string) {
+  return text.replace(/\s+/g, " ").trim();
 }
 
-const carpets: Carpet[] = [
-  {
-    id: 1,
-    name: "Milano",
-    price: 395,
-    description: "Сучасний м'який килим для вітальні.",
-  },
-  {
-    id: 2,
-    name: "Venice",
-    price: 485,
-    description: "Стильний килим із коротким ворсом.",
-  },
-  {
-    id: 3,
-    name: "Royal",
-    price: 800,
-    description: "Преміальний килим високої якості.",
-  },
-  {
-    id: 4,
-    name: "Soft",
-    price: 1200,
-    description: "Дуже м'який килим для спальні.",
-  },
-];
+function trimText(text: string, maxLength: number) {
+  const cleaned = cleanText(text);
 
-export default function ProductPage() {
-  const params = useParams();
-  const { addToCart } = useCart();
+  if (cleaned.length <= maxLength) {
+    return cleaned;
+  }
 
-  const id = Number(params.id);
+  return `${cleaned.slice(0, maxLength - 3).trim()}...`;
+}
 
-  const carpet = carpets.find((item) => item.id === id);
+function createDefaultSeoTitle(product: Product) {
+  return `${product.name} купити | DreamCarpet`;
+}
 
-  if (!carpet) {
-    return <h1 style={{ padding: "40px" }}>Товар не знайдено</h1>;
+function createDefaultSeoDescription(product: Product) {
+  if (product.description) {
+    return trimText(product.description, 155);
+  }
+
+  const parts = [
+    product.name,
+    product.collection
+      ? `колекція ${product.collection}`
+      : "",
+    "килим або доріжка для дому",
+    `ціна ${product.price} грн`,
+    "DreamCarpet",
+  ].filter(Boolean);
+
+  return trimText(parts.join(". "), 155);
+}
+
+function createDefaultKeywords(product: Product) {
+  const colors = Array.isArray(product.colors)
+    ? product.colors
+    : [];
+
+  return [
+    product.name,
+    product.collection,
+    product.article,
+    "килим",
+    "доріжка",
+    "килим купити",
+    "килимова доріжка",
+    "DreamCarpet",
+    ...colors,
+  ].filter(Boolean);
+}
+
+function absoluteUrl(pathOrUrl: string) {
+  if (!pathOrUrl) {
+    return "";
+  }
+
+  if (
+    pathOrUrl.startsWith("http://") ||
+    pathOrUrl.startsWith("https://")
+  ) {
+    return pathOrUrl;
+  }
+
+  return `${siteUrl}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;
+}
+
+async function getProduct(id: string) {
+  const products = await getAllProducts();
+
+  const productId = Number(id);
+
+  if (!Number.isInteger(productId)) {
+    return null;
   }
 
   return (
-    <main
-      style={{
-        padding: "40px",
-        maxWidth: "900px",
-        margin: "0 auto",
-      }}
-    >
-      <div
-        style={{
-          height: "400px",
-          background: "#ddd",
-          borderRadius: "15px",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          fontSize: "28px",
+    products.find(
+      (item) => item.id === productId
+    ) ?? null
+  );
+}
+
+function getMatchScore(
+  product: Product,
+  candidate: Product
+) {
+  let score = 0;
+
+  if (candidate.category === product.category) {
+    score += 4;
+  }
+
+  if (candidate.base === product.base) {
+    score += 3;
+  }
+
+  if (
+    product.productType &&
+    candidate.productType === product.productType
+  ) {
+    score += 2;
+  }
+
+  if (
+    product.pile &&
+    candidate.pile === product.pile
+  ) {
+    score += 2;
+  }
+
+  if (
+    product.material &&
+    candidate.material === product.material
+  ) {
+    score += 2;
+  }
+
+  if (
+    product.shape &&
+    candidate.shape === product.shape
+  ) {
+    score += 1;
+  }
+
+  if (product.price > 0 && candidate.price > 0) {
+    const difference = Math.abs(
+      candidate.price - product.price
+    );
+
+    if (difference <= product.price * 0.25) {
+      score += 1;
+    }
+  }
+
+  return score;
+}
+
+function getRelatedProducts(
+  products: Product[],
+  product: Product
+) {
+  return products
+    .filter((item) => item.id !== product.id)
+    .map((item) => ({
+      product: item,
+      score: getMatchScore(product, item),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((first, second) => {
+      if (second.score !== first.score) {
+        return second.score - first.score;
+      }
+
+      return second.product.id - first.product.id;
+    })
+    .slice(0, 4)
+    .map((item) => item.product);
+}
+
+function createProductJsonLd(product: Product) {
+  const productUrl = `${siteUrl}/catalog/${product.id}`;
+
+  const images = Array.isArray(product.images)
+    ? product.images
+        .map((image) => absoluteUrl(image))
+        .filter(Boolean)
+    : [];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description:
+      product.seoDescription ||
+      createDefaultSeoDescription(product),
+    image: images,
+    sku: product.article,
+    brand: {
+      "@type": "Brand",
+      name: product.brand || "DreamCarpet",
+    },
+    category: product.category,
+    color: Array.isArray(product.colors)
+      ? product.colors.join(", ")
+      : undefined,
+    material: product.material || undefined,
+    offers: {
+      "@type": "Offer",
+      url: productUrl,
+      priceCurrency: "UAH",
+      price: product.price,
+      availability: product.inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+    },
+  };
+}
+
+function createBreadcrumbJsonLd(product: Product) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Головна",
+        item: siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Каталог",
+        item: `${siteUrl}/catalog`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.name,
+        item: `${siteUrl}/catalog/${product.id}`,
+      },
+    ],
+  };
+}
+
+export async function generateMetadata({
+  params,
+}: ProductPageProps): Promise<Metadata> {
+  const { id } = await params;
+
+  const product = await getProduct(id);
+
+  if (!product) {
+    return {
+      title: "Товар не знайдено | DreamCarpet",
+      description:
+        "На жаль, цей товар не знайдено в каталозі DreamCarpet.",
+    };
+  }
+
+  const title =
+    product.seoTitle || createDefaultSeoTitle(product);
+
+  const description =
+    product.seoDescription ||
+    createDefaultSeoDescription(product);
+
+  const keywords =
+    product.seoKeywords &&
+    product.seoKeywords.length > 0
+      ? product.seoKeywords
+      : createDefaultKeywords(product);
+
+  const mainImage =
+    product.images && product.images.length > 0
+      ? absoluteUrl(product.images[0])
+      : undefined;
+
+  const canonicalUrl = `${siteUrl}/catalog/${product.id}`;
+
+  return {
+    title,
+    description,
+    keywords,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: canonicalUrl,
+      images: mainImage ? [mainImage] : [],
+    },
+  };
+}
+
+export default async function ProductPage({
+  params,
+}: ProductPageProps) {
+  const { id } = await params;
+
+  const products = await getAllProducts();
+
+  const productId = Number(id);
+
+  if (!Number.isInteger(productId)) {
+    notFound();
+  }
+
+  const product =
+    products.find(
+      (item) => item.id === productId
+    ) ?? null;
+
+  if (!product) {
+    notFound();
+  }
+
+  const relatedProducts = getRelatedProducts(
+    products,
+    product
+  );
+
+  const productJsonLd =
+    createProductJsonLd(product);
+
+  const breadcrumbJsonLd =
+    createBreadcrumbJsonLd(product);
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(productJsonLd),
         }}
-      >
-        Фото {carpet.name}
-      </div>
+      />
 
-      <h1 style={{ marginTop: "30px" }}>{carpet.name}</h1>
-
-      <h2>{carpet.price} грн/м²</h2>
-
-      <p>{carpet.description}</p>
-
-      <button
-        onClick={() =>
-          addToCart({
-            id: carpet.id,
-            name: carpet.name,
-            price: carpet.price,
-          })
-        }
-        style={{
-          marginTop: "25px",
-          padding: "15px 30px",
-          background: "#111",
-          color: "#fff",
-          border: "none",
-          borderRadius: "10px",
-          cursor: "pointer",
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbJsonLd),
         }}
-      >
-        Додати в кошик
-      </button>
-    </main>
+      />
+
+      <ProductDetails
+        product={product}
+        relatedProducts={relatedProducts}
+      />
+    </>
   );
 }

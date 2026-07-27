@@ -1,52 +1,124 @@
+"use client";
+
 import Link from "next/link";
 
 export default function Hero() {
   return (
     <section
       style={{
-        background: "linear-gradient(135deg, #1f1f1f, #3a3a3a)",
+        background:
+          "linear-gradient(135deg, #111 0%, #1f1f1f 45%, #2d2d2d 100%)",
         color: "#fff",
-        textAlign: "center",
-        padding: "100px 20px",
+        minHeight: "85vh",
+        display: "flex",
+        alignItems: "center",
       }}
     >
-      <h2
+      <div
         style={{
-          fontSize: "48px",
-          marginBottom: "20px",
+          maxWidth: "1400px",
+          width: "100%",
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "60px",
+          alignItems: "center",
+          padding: "60px 40px",
         }}
       >
-        Килими для вашого ідеального дому
-      </h2>
+        {/* Ліва сторона */}
+        <div>
+          <p
+            style={{
+              color: "#d4af37",
+              fontWeight: "bold",
+              letterSpacing: "2px",
+              marginBottom: "15px",
+            }}
+          >
+            DREAMCARPET
+          </p>
 
-      <p
-        style={{
-          fontSize: "20px",
-          color: "#ddd",
-          maxWidth: "700px",
-          margin: "0 auto 40px",
-        }}
-      >
-        Великий вибір сучасних килимів, швидкий підбір за розміром та
-        розрахунок вартості за кілька секунд.
-      </p>
+          <h1
+            style={{
+              fontSize: "64px",
+              lineHeight: "1.1",
+              marginBottom: "25px",
+            }}
+          >
+            Килими,
+            <br />
+            які створюють
+            <span style={{ color: "#d4af37" }}> затишок.</span>
+          </h1>
 
-      <Link href="/catalog">
-        <button
+          <p
+            style={{
+              fontSize: "20px",
+              color: "#cfcfcf",
+              lineHeight: "1.8",
+              maxWidth: "600px",
+              marginBottom: "35px",
+            }}
+          >
+            Великий вибір сучасних килимів, доріжок та покриттів для будь-якого
+            інтер'єру. Висока якість, доступні ціни та швидка доставка по всій
+            Україні.
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "20px",
+              flexWrap: "wrap",
+            }}
+          >
+            <Link
+              href="/catalog"
+              style={{
+                background: "#d4af37",
+                color: "#111",
+                padding: "18px 35px",
+                borderRadius: "12px",
+                textDecoration: "none",
+                fontWeight: "bold",
+                fontSize: "18px",
+              }}
+            >
+              Перейти до каталогу →
+            </Link>
+
+     
+          </div>
+        </div>
+        
+        {/* Права сторона */}
+        <div
           style={{
-            padding: "15px 35px",
-            fontSize: "18px",
-            background: "#d4af37",
-            color: "#111",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontWeight: "bold",
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          Перейти до каталогу
-        </button>
-      </Link>
+          <div
+            style={{
+              width: "500px",
+              height: "500px",
+              borderRadius: "30px",
+              background:
+                "linear-gradient(135deg,#d4af37,#f2e3a2,#b98a16)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              color: "#111",
+              fontSize: "30px",
+              fontWeight: "bold",
+              boxShadow: "0 25px 60px rgba(0,0,0,.4)",
+            }}
+          >
+            Фото килима
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
