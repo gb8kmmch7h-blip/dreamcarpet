@@ -1,16 +1,14 @@
-import { randomUUID } from "crypto";
-import { mkdir, readFile, writeFile } from "fs/promises";
+import {
+  mkdir,
+  readFile,
+  writeFile,
+} from "fs/promises";
 import path from "path";
-
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
-
-type OrderStatus =
-  | "new"
-  | "processing"
-  | "completed"
-  | "cancelled";
 
 type OrderItem = {
   name: string;
@@ -40,145 +38,29 @@ type SavedOrder = {
   id: number;
   orderNumber: number;
   createdAt: string;
-  status: OrderStatus;
+  status: string;
   accessToken: string;
-
   customerName: string;
   phone: string;
-
   delivery: string;
   city: string;
   warehouse: string;
-
   paymentMethod: string;
   paidAmount: number;
   amountDue: number;
-
   comment: string;
   total: number;
   area: number;
-
   items: OrderItem[];
 };
 
 const START_ORDER_NUMBER = 4654;
 
-function getDatabaseDirectory() {
-  return path.join(process.cwd(), "database");
-}
-
-function getOrdersFilePath() {
-  return path.join(
-    getDatabaseDirectory(),
-    "orders.json"
-  );
-}
-
-function getCounterFilePath() {
-  return path.join(
-    getDatabaseDirectory(),
-    "order-counter.json"
-  );
-}
-
-async function ensureDatabaseDirectory() {
-  await mkdir(getDatabaseDirectory(), {
-    recursive: true,
-  });
-}
-
-async function readOrders(): Promise<SavedOrder[]> {
-  await ensureDatabaseDirectory();
-
-  try {
-    const fileContent = await readFile(
-      getOrdersFilePath(),
-      "utf-8"
-    );
-
-    const parsedData: unknown =
-      JSON.parse(fileContent);
-
-    if (!Array.isArray(parsedData)) {
-      return [];
-    }
-
-    return parsedData as SavedOrder[];
-  } catch {
-    await writeFile(
-      getOrdersFilePath(),
-      JSON.stringify([], null, 2),
-      "utf-8"
-    );
-
-    return [];
-  }
-}
-
-async function writeOrders(orders: SavedOrder[]) {
-  await ensureDatabaseDirectory();
-
-  await writeFile(
-    getOrdersFilePath(),
-    JSON.stringify(orders, null, 2),
-    "utf-8"
-  );
-}
-
-async function saveOrder(order: SavedOrder) {
-  const currentOrders = await readOrders();
-
-  currentOrders.push(order);
-
-  await writeOrders(currentOrders);
-}
-
-async function getNextOrderNumber() {
-  await ensureDatabaseDirectory();
-
-  const counterFile = getCounterFilePath();
-
-  let currentNumber = START_ORDER_NUMBER - 1;
-
-  try {
-    const savedCounter = await readFile(
-      counterFile,
-      "utf-8"
-    );
-
-    const parsedCounter = JSON.parse(
-      savedCounter
-    ) as {
-      lastOrderNumber?: number;
-    };
-
-    if (
-      typeof parsedCounter.lastOrderNumber ===
-        "number" &&
-      Number.isFinite(parsedCounter.lastOrderNumber)
-    ) {
-      currentNumber =
-        parsedCounter.lastOrderNumber;
-    }
-  } catch {
-    // Файл створиться автоматично.
-  }
-
-  const nextNumber = currentNumber + 1;
-
-  await writeFile(
-    counterFile,
-    JSON.stringify(
-      {
-        lastOrderNumber: nextNumber,
-      },
-      null,
-      2
-    ),
-    "utf-8"
-  );
-
-  return nextNumber;
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 function formatNumber(value: number) {
@@ -188,158 +70,221 @@ function formatNumber(value: number) {
   }).format(value);
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+function getDatabaseDirectory() {
+  return path.join(process.cwd(), "database");
 }
 
-function getValidNumber(value: unknown) {
-  return typeof value === "number" &&
-    Number.isFinite(value)
-    ? value
-    : 0;
+function getOrdersFilePath() {
+  return path.join(getDatabaseDirectory(), "orders.json");
 }
 
-function normalizeItem(item: OrderItem): OrderItem {
-  return {
-    name: item.name?.trim() || "Товар",
-    image: item.image || "",
-    color: item.color || "Не вказано",
-    width: getValidNumber(item.width),
-    length: getValidNumber(item.length),
-    area: getValidNumber(item.area),
-    quantity:
-      typeof item.quantity === "number" &&
-      Number.isFinite(item.quantity) &&
-      item.quantity > 0
-        ? item.quantity
-        : 1,
-    price: getValidNumber(item.price),
-  };
+function getCounterFilePath() {
+  return path.join(getDatabaseDirectory(), "order-counter.json");
 }
 
-function createTelegramText(order: SavedOrder) {
-  const itemsText = order.items
-    .map((item, index) => {
-      const quantity = item.quantity ?? 1;
-      const itemTotal = (item.price ?? 0) * quantity;
-
-      return [
-        `<b>${index + 1}. ${escapeHtml(item.name)}</b>`,
-        `🎨 Колір: ${escapeHtml(
-          item.color || "Не вказано"
-        )}`,
-        `📏 Розмір: ${formatNumber(
-          item.width ?? 0
-        )} × ${formatNumber(item.length ?? 0)} м`,
-        `📐 Площа: ${formatNumber(
-          item.area ?? 0
-        )} м²`,
-        `🔢 Кількість: ${quantity}`,
-        `💵 Сума: ${formatNumber(itemTotal)} грн`,
-      ].join("\n");
-    })
-    .join("\n\n");
-
-  const paymentBlock =
-    order.paidAmount > 0
-      ? [
-          `❗ <b>Оплачено: ${formatNumber(
-            order.paidAmount
-          )} грн</b> ❗`,
-          `Залишок: <b>${formatNumber(
-            order.amountDue
-          )} грн</b>`,
-        ].join("\n")
-      : [
-          "Оплачено: <b>0 грн</b>",
-          `До оплати: <b>${formatNumber(
-            order.amountDue
-          )} грн</b>`,
-        ].join("\n");
-
-  return `
-<b>Нове замовлення #${order.orderNumber}</b>
-
-📞 <b>${escapeHtml(order.phone)}</b>
-👤 ${escapeHtml(order.customerName)}
-
-🚚 ${escapeHtml(order.delivery)}
-🏙 ${escapeHtml(order.city)}
-📦 ${escapeHtml(order.warehouse)}
-
-${itemsText}
-
-<b>Разом: ${formatNumber(order.total)} грн</b>
-Площа: <b>${formatNumber(order.area)} м²</b>
-
-${paymentBlock}
-💳 ${escapeHtml(order.paymentMethod)}
-
-📝 ${escapeHtml(order.comment)}
-`.trim();
+async function ensureDatabaseDirectory() {
+  await mkdir(getDatabaseDirectory(), { recursive: true });
 }
 
-async function sendTelegramMessage(order: SavedOrder) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+async function readOrders(): Promise<SavedOrder[]> {
+  await ensureDatabaseDirectory();
 
-  if (!botToken || !chatId) {
-    console.log(
-      "Telegram не налаштований. Замовлення збережено тільки в orders.json."
+  try {
+    const content = await readFile(getOrdersFilePath(), "utf-8");
+    const parsed: unknown = JSON.parse(content);
+    return Array.isArray(parsed) ? (parsed as SavedOrder[]) : [];
+  } catch {
+    await writeFile(
+      getOrdersFilePath(),
+      JSON.stringify([], null, 2),
+      "utf-8"
     );
+    return [];
+  }
+}
 
-    return {
-      sent: false,
-      reason: "Telegram не налаштований",
+async function saveOrder(order: SavedOrder) {
+  const orders = await readOrders();
+  orders.push(order);
+
+  await writeFile(
+    getOrdersFilePath(),
+    JSON.stringify(orders, null, 2),
+    "utf-8"
+  );
+}
+
+async function getNextOrderNumber() {
+  await ensureDatabaseDirectory();
+
+  const counterFile = getCounterFilePath();
+  let currentNumber = START_ORDER_NUMBER - 1;
+
+  try {
+    const content = await readFile(counterFile, "utf-8");
+    const parsed = JSON.parse(content) as {
+      lastOrderNumber?: number;
     };
+
+    if (
+      typeof parsed.lastOrderNumber === "number" &&
+      Number.isFinite(parsed.lastOrderNumber)
+    ) {
+      currentNumber = parsed.lastOrderNumber;
+    }
+  } catch {
+    // створиться автоматично
   }
 
-  const text = createTelegramText(order);
+  const nextNumber = currentNumber + 1;
 
-  const response = await fetch(
-    `https://api.telegram.org/bot${botToken}/sendMessage`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text:
-          text.length > 3900
-            ? `${text.slice(0, 3900)}\n\n...`
-            : text,
-        parse_mode: "HTML",
-      }),
-    }
+  await writeFile(
+    counterFile,
+    JSON.stringify({ lastOrderNumber: nextNumber }, null, 2),
+    "utf-8"
   );
 
-  const data = await response.json();
-
-  if (!response.ok || !data.ok) {
-    throw new Error(
-      data.description ||
-        "Telegram не зміг прийняти замовлення"
-    );
-  }
-
-  return {
-    sent: true,
-    reason: "",
-  };
+  return nextNumber;
 }
 
+async function getLocalProductPhoto(imagePath?: string) {
+  if (!imagePath) {
+    return null;
+  }
+
+  const publicDirectory = path.resolve(process.cwd(), "public");
+
+  const relativeImagePath = imagePath
+    .replace(/^\/+/, "")
+    .replaceAll("\\", "/");
+
+  const absoluteImagePath = path.resolve(
+    publicDirectory,
+    relativeImagePath
+  );
+
+  if (
+    absoluteImagePath !== publicDirectory &&
+    !absoluteImagePath.startsWith(
+      `${publicDirectory}${path.sep}`
+    )
+  ) {
+    return null;
+  }
+
+  try {
+    const imageBuffer = await readFile(absoluteImagePath);
+
+    return {
+      imageBuffer,
+      absoluteImagePath,
+    };
+  } catch (error) {
+    console.error(
+      `Не вдалося прочитати фото ${imagePath}:`,
+      error
+    );
+    return null;
+  }
+}
+
+async function addPhotoNumberToImage(
+  imageBuffer: Buffer,
+  photoNumber: number
+) {
+  const rotated = await sharp(imageBuffer)
+    .rotate()
+    .jpeg({ quality: 92 })
+    .toBuffer({ resolveWithObject: true });
+
+  const width = rotated.info.width || 1200;
+  const height = rotated.info.height || 1200;
+
+  const circleSize = Math.max(
+    150,
+    Math.min(
+      280,
+      Math.round(Math.min(width, height) * 0.24)
+    )
+  );
+
+  const center = circleSize / 2;
+  const labelSize = Math.round(circleSize * 0.15);
+  const numberSize = Math.round(circleSize * 0.42);
+
+  const svg = Buffer.from(`
+    <svg
+      width="${circleSize}"
+      height="${circleSize}"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow
+            dx="0"
+            dy="7"
+            stdDeviation="8"
+            flood-color="#000000"
+            flood-opacity="0.55"
+          />
+        </filter>
+      </defs>
+
+      <circle
+        cx="${center}"
+        cy="${center}"
+        r="${center - 10}"
+        fill="rgba(0,0,0,0.72)"
+        stroke="rgba(255,255,255,0.92)"
+        stroke-width="7"
+        filter="url(#shadow)"
+      />
+
+      <text
+        x="${center}"
+        y="${Math.round(circleSize * 0.38)}"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="${labelSize}"
+        font-weight="700"
+        letter-spacing="3"
+        fill="white"
+      >ФОТО</text>
+
+      <text
+        x="${center}"
+        y="${Math.round(circleSize * 0.76)}"
+        text-anchor="middle"
+        font-family="Arial, sans-serif"
+        font-size="${numberSize}"
+        font-weight="800"
+        fill="white"
+      >${photoNumber}</text>
+    </svg>
+  `);
+
+  return sharp(rotated.data)
+    .composite([
+      {
+        input: svg,
+        gravity: "center",
+      },
+    ])
+    .jpeg({ quality: 92 })
+    .toBuffer();
+}
+
+/*
+  GET /api/orders
+*/
 export async function GET() {
   try {
     const orders = await readOrders();
 
     const sortedOrders = [...orders].sort(
-      (firstOrder, secondOrder) =>
-        new Date(secondOrder.createdAt).getTime() -
-        new Date(firstOrder.createdAt).getTime()
+      (a, b) =>
+        new Date(b.createdAt).getTime() -
+        new Date(a.createdAt).getTime()
     );
 
     return NextResponse.json({
@@ -352,30 +297,44 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message:
-          "Не вдалося завантажити замовлення",
+        message: "Не вдалося завантажити замовлення",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
 
+/*
+  POST /api/orders
+*/
 export async function POST(request: Request) {
   try {
-    const body =
-      (await request.json()) as OrderRequest;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    if (!botToken || !chatId) {
+      return NextResponse.json(
+        {
+          message:
+            "Не знайдено TELEGRAM_BOT_TOKEN або TELEGRAM_CHAT_ID у .env.local",
+        },
+        { status: 500 }
+      );
+    }
+
+    const body = (await request.json()) as OrderRequest;
 
     const customerName =
-      body.customerName?.trim() || "";
+      body.customerName?.trim() || "Не вказано";
 
-    const phone = body.phone?.trim() || "";
+    const phone =
+      body.phone?.trim() || "Не вказано";
 
     const delivery =
       body.delivery?.trim() || "Не вказано";
 
-    const city = body.city?.trim() || "Не вказано";
+    const city =
+      body.city?.trim() || "Не вказано";
 
     const warehouse =
       body.warehouse?.trim() || "Не вказано";
@@ -386,50 +345,25 @@ export async function POST(request: Request) {
     const comment =
       body.comment?.trim() || "Без коментаря";
 
-    const total = getValidNumber(body.total);
-    const area = getValidNumber(body.area);
+    const total =
+      typeof body.total === "number" &&
+      Number.isFinite(body.total)
+        ? body.total
+        : 0;
+
+    const area =
+      typeof body.area === "number" &&
+      Number.isFinite(body.area)
+        ? body.area
+        : 0;
 
     const items = Array.isArray(body.items)
-      ? body.items.map(normalizeItem)
+      ? body.items
       : [];
-
-    if (!customerName) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Вкажіть ім’я покупця",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!phone) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Вкажіть номер телефону",
-        },
-        { status: 400 }
-      );
-    }
 
     if (items.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "У замовленні немає товарів",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (total <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Неправильна загальна сума замовлення",
-        },
+        { message: "У замовленні немає товарів" },
         { status: 400 }
       );
     }
@@ -437,14 +371,223 @@ export async function POST(request: Request) {
     const orderNumber = await getNextOrderNumber();
     const accessToken = randomUUID();
 
+    // Поки онлайн-оплата тестова — не вважаємо її оплаченою.
     const paidAmount =
-      paymentMethod === "Повна оплата"
-        ? total
-        : paymentMethod === "Передоплата 200 грн"
-          ? Math.min(200, total)
-          : 0;
+      paymentMethod === "Передоплата 200 грн"
+        ? Math.min(200, total)
+        : 0;
 
     const amountDue = Math.max(total - paidAmount, 0);
+
+    /*
+      Готуємо унікальні фото.
+      На кожне фото наносимо ФОТО 1, ФОТО 2...
+    */
+    const photoNumberByKey = new Map<string, number>();
+
+    const numberedPhotos: Array<{
+      photoNumber: number;
+      itemIndex: number;
+      item: OrderItem;
+      imageBuffer: Buffer;
+    }> = [];
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = items[index];
+
+      const key =
+        item.image?.trim() ||
+        item.name.trim().toLowerCase();
+
+      if (photoNumberByKey.has(key)) {
+        continue;
+      }
+
+      const localPhoto =
+        await getLocalProductPhoto(item.image);
+
+      if (!localPhoto) {
+        continue;
+      }
+
+      const photoNumber = numberedPhotos.length + 1;
+
+      photoNumberByKey.set(key, photoNumber);
+
+      const labeledImageBuffer =
+        await addPhotoNumberToImage(
+          localPhoto.imageBuffer,
+          photoNumber
+        );
+
+      numberedPhotos.push({
+        photoNumber,
+        itemIndex: index,
+        item,
+        imageBuffer: labeledImageBuffer,
+      });
+    }
+
+    /*
+      Текст одного замовлення.
+      Кожен товар посилається на ФОТО N.
+    */
+    const itemsText = items
+      .map((item, index) => {
+        const quantity = item.quantity ?? 1;
+        const itemTotal =
+          (item.price ?? 0) * quantity;
+
+        const key =
+          item.image?.trim() ||
+          item.name.trim().toLowerCase();
+
+        const photoNumber =
+          photoNumberByKey.get(key);
+
+        return [
+          `<b>${index + 1}. ${escapeHtml(item.name)}</b>`,
+          photoNumber
+            ? `🖼 Фото ${photoNumber}`
+            : "🖼 Фото не знайдено",
+          `🎨 Колір: ${escapeHtml(
+            item.color || "Не вказано"
+          )}`,
+          `📏 Розмір: ${formatNumber(
+            item.width ?? 0
+          )} × ${formatNumber(
+            item.length ?? 0
+          )} м`,
+          `📐 Площа: ${formatNumber(
+            item.area ?? 0
+          )} м²`,
+          `🔢 Кількість: ${quantity}`,
+          `💵 Сума: ${formatNumber(itemTotal)} грн`,
+        ].join("\n");
+      })
+      .join("\n\n");
+
+    const paymentBlock =
+      paidAmount > 0
+        ? [
+            `✅ Оплачено: <b>${formatNumber(
+              paidAmount
+            )} грн</b>`,
+            `💰 Залишок: <b>${formatNumber(
+              amountDue
+            )} грн</b>`,
+          ].join("\n")
+        : [
+            "💵 Оплачено: <b>0 грн</b>",
+            `💰 До оплати: <b>${formatNumber(
+              amountDue
+            )} грн</b>`,
+          ].join("\n");
+
+    const orderText = `
+<b>#${orderNumber}</b>
+
+📞 <b>${escapeHtml(phone)}</b>
+🚚 ${escapeHtml(delivery)}
+🏙 ${escapeHtml(city)}
+📦 ${escapeHtml(warehouse)}
+👤 ${escapeHtml(customerName)}
+
+${itemsText}
+
+✅ <b>Загальна кількість товарів:</b> ${items.reduce(
+      (sum, item) => sum + (item.quantity ?? 1),
+      0
+    )}
+📈 <b>Загальна площа:</b> ${formatNumber(area)} м²
+💰 <b>Загальна сума:</b> ${formatNumber(total)} грн
+
+${paymentBlock}
+💳 <b>Спосіб оплати:</b> ${escapeHtml(paymentMethod)}
+🚚 <b>Спосіб доставки:</b> ${escapeHtml(delivery)}
+💬 <b>Коментар:</b> ${escapeHtml(comment)}
+`.trim();
+
+    if (numberedPhotos.length === 0) {
+      return NextResponse.json(
+        {
+          message:
+            "Не вдалося знайти фотографії товарів для Telegram",
+        },
+        { status: 500 }
+      );
+    }
+
+    /*
+      Telegram media group = один альбом.
+      Максимум 10 фото в одному альбомі.
+      Для магазину цього більш ніж достатньо у типовому замовленні.
+    */
+    const firstTenPhotos = numberedPhotos.slice(0, 10);
+
+    const formData = new FormData();
+    formData.append("chat_id", chatId);
+
+    const media = firstTenPhotos.map(
+      (photo, index) => {
+        const attachmentName = `photo_${index + 1}`;
+
+        formData.append(
+          attachmentName,
+         new Blob([new Uint8Array(photo.imageBuffer)], {
+  type: "image/jpeg",
+}),
+          `photo-${photo.photoNumber}.jpg`
+        );
+
+        return index === 0
+          ? {
+              type: "photo",
+              media: `attach://${attachmentName}`,
+              caption: orderText,
+              parse_mode: "HTML",
+            }
+          : {
+              type: "photo",
+              media: `attach://${attachmentName}`,
+            };
+      }
+    );
+
+    formData.append(
+      "media",
+      JSON.stringify(media)
+    );
+
+    const telegramResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendMediaGroup`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    const telegramData =
+      await telegramResponse.json();
+
+    if (
+      !telegramResponse.ok ||
+      !telegramData.ok
+    ) {
+      console.error(
+        "Telegram album error:",
+        telegramData
+      );
+
+      return NextResponse.json(
+        {
+          message:
+            telegramData.description ||
+            "Telegram не зміг надіслати альбом",
+        },
+        { status: 502 }
+      );
+    }
 
     const savedOrder: SavedOrder = {
       id: orderNumber,
@@ -452,71 +595,34 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
       status: "new",
       accessToken,
-
       customerName,
       phone,
-
       delivery,
       city,
       warehouse,
-
       paymentMethod,
       paidAmount,
       amountDue,
-
       comment,
       total,
       area,
-
       items,
     };
 
-    /*
-      Головне:
-      спочатку зберігаємо замовлення.
-      Telegram не має права ламати оформлення.
-    */
     await saveOrder(savedOrder);
-
-    let telegramSent = false;
-    let telegramMessage = "";
-
-    try {
-      const telegramResult =
-        await sendTelegramMessage(savedOrder);
-
-      telegramSent = telegramResult.sent;
-      telegramMessage = telegramResult.reason;
-    } catch (telegramError) {
-      console.error(
-        "Telegram send error:",
-        telegramError
-      );
-
-      telegramSent = false;
-      telegramMessage =
-        telegramError instanceof Error
-          ? telegramError.message
-          : "Telegram не спрацював";
-    }
 
     return NextResponse.json({
       success: true,
       orderNumber,
       accessToken,
-      telegramSent,
-      message: telegramSent
-        ? "Замовлення збережено і надіслано в Telegram"
-        : telegramMessage
-          ? `Замовлення збережено. ${telegramMessage}`
-          : "Замовлення збережено",
+      message:
+        "Замовлення і фото надіслано одним Telegram-альбомом",
     });
   } catch (error) {
     console.error("Order API error:", error);
 
     return NextResponse.json(
       {
-        success: false,
         message:
           error instanceof Error
             ? error.message

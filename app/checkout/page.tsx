@@ -141,7 +141,8 @@ export default function CheckoutPage() {
     > = {
       "cash-on-delivery": "Накладений платіж",
       prepayment: "Передоплата 200 грн",
-      "full-payment": "Повна оплата",
+      "full-payment":
+        "Онлайн-оплата — Apple Pay / Google Pay / картка",
     };
 
     setIsSubmitting(true);
@@ -242,9 +243,13 @@ export default function CheckoutPage() {
       }
 
       setMessage(
-        result.orderNumber
-          ? `Замовлення №${result.orderNumber} успішно оформлено!`
-          : "Замовлення успішно оформлено!"
+        payment === "full-payment"
+          ? result.orderNumber
+            ? `Замовлення №${result.orderNumber} створено. Онлайн-оплата буде доступна після підключення платіжного мерчанта. Зараз кошти не списуються.`
+            : "Замовлення створено. Онлайн-оплата буде доступна після підключення платіжного мерчанта. Зараз кошти не списуються."
+          : result.orderNumber
+            ? `Замовлення №${result.orderNumber} успішно оформлено!`
+            : "Замовлення успішно оформлено!"
       );
 
       clearCart();
@@ -553,7 +558,7 @@ export default function CheckoutPage() {
                   "full-payment"
                 ) && (
                   <option value="full-payment">
-                    Повна оплата
+                    Онлайн-оплата — Apple Pay / Google Pay / Visa / Mastercard
                   </option>
                 )}
               </select>
@@ -576,11 +581,86 @@ export default function CheckoutPage() {
                 <br />
 
                 {totalArea > 15
-                  ? "Для замовлень понад 15 м² доступна тільки повна оплата."
+                  ? "Для замовлень понад 15 м² доступна тільки онлайн-оплата."
                   : totalArea >= 10
-                    ? "Для замовлень від 10 до 15 м² доступна передоплата 200 грн або повна оплата."
+                    ? "Для замовлень від 10 до 15 м² доступна передоплата 200 грн або онлайн-оплата."
                     : "Для замовлень менше 10 м² доступні всі способи оплати."}
               </div>
+
+              {payment === "full-payment" && (
+                <div
+                  style={{
+                    marginTop: "12px",
+                    padding: "16px",
+                    borderRadius: "14px",
+                    background:
+                      "linear-gradient(135deg, #111111 0%, #2a2117 100%)",
+                    color: "#ffffff",
+                    border: "1px solid #d4af37",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        padding: "7px 10px",
+                        borderRadius: "999px",
+                        background: "#ffffff",
+                        color: "#111111",
+                        fontWeight: 900,
+                      }}
+                    >
+                       Pay
+                    </span>
+
+                    <span
+                      style={{
+                        padding: "7px 10px",
+                        borderRadius: "999px",
+                        background: "#ffffff",
+                        color: "#111111",
+                        fontWeight: 900,
+                      }}
+                    >
+                      G Pay
+                    </span>
+
+                    <span
+                      style={{
+                        padding: "7px 10px",
+                        borderRadius: "999px",
+                        background: "#d4af37",
+                        color: "#111111",
+                        fontWeight: 900,
+                      }}
+                    >
+                      Visa / Mastercard
+                    </span>
+                  </div>
+
+                  <strong style={{ color: "#ffd95a" }}>
+                    Онлайн-оплата підготовлена до підключення
+                  </strong>
+
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      color: "#eadfcf",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    Після підключення платіжного мерчанта гроші
+                    надходитимуть на рахунок ФОП. Поки що це тестовий
+                    режим: замовлення створюється, але кошти не списуються.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
@@ -625,7 +705,9 @@ export default function CheckoutPage() {
             >
               {isSubmitting
                 ? "Оформлення..."
-                : "Підтвердити замовлення"}
+                : payment === "full-payment"
+                  ? "Створити замовлення для онлайн-оплати"
+                  : "Підтвердити замовлення"}
             </button>
           </form>
 

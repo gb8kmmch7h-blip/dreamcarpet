@@ -497,13 +497,18 @@ export default function CategoryProductsClient({
                     <Link
                       href={`/catalog/${product.id}`}
                       className="image-link"
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                      }}
                     >
                       {image ? (
                         <Image
                           src={image}
                           alt={product.name}
                           fill
-                          sizes="(max-width: 768px) 100vw, 320px"
+                          sizes="(max-width: 768px) 50vw, 320px"
+                          loading="eager"
                         />
                       ) : (
                         <div className="no-image">
@@ -875,11 +880,97 @@ export default function CategoryProductsClient({
           }
 
           .products-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
           }
 
           .product-card {
-            border-radius: 22px;
+            border-radius: 16px;
+            box-shadow: none;
+            background: #fff8eb;
+          }
+
+          .image-box {
+            aspect-ratio: 0.82 / 1;
+            height: auto;
+            background: #eee4d4;
+          }
+
+          .image-box :global(img) {
+            object-fit: cover;
+            object-position: center;
+          }
+
+          .badges {
+            top: 7px;
+            left: 7px;
+            gap: 4px;
+          }
+
+          .badges span {
+            padding: 5px 7px;
+            font-size: 9px;
+          }
+
+          .product-info {
+            gap: 6px;
+            padding: 10px;
+          }
+
+          .article {
+            font-size: 10px;
+          }
+
+          .product-title h3 {
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            min-height: 36px;
+            font-size: 16px;
+            line-height: 1.12;
+          }
+
+          .product-info p {
+            display: -webkit-box;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+            font-size: 12px;
+          }
+
+          .product-meta {
+            gap: 4px;
+          }
+
+          .product-meta span {
+            padding: 5px 7px;
+            font-size: 9px;
+          }
+
+          .price {
+            gap: 3px;
+          }
+
+          .price strong {
+            font-size: 19px;
+          }
+
+          .price span {
+            font-size: 10px;
+          }
+
+          .details-button {
+            min-height: 38px;
+            border-radius: 999px;
+            font-size: 12px;
+            background:
+              linear-gradient(
+                135deg,
+                #d4af37,
+                #ffd95a
+              );
+            color: #111111;
           }
         }
       `}</style>

@@ -87,6 +87,14 @@ function getOrderId(order: Order) {
   );
 }
 
+function getPrintOrderId(order: Order) {
+  return String(
+    order.id ||
+      order.orderNumber ||
+      ""
+  );
+}
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -262,6 +270,7 @@ export default function AdminOrdersPage() {
           <section className="orders">
             {orders.map((order) => {
               const id = getOrderId(order);
+              const printId = getPrintOrderId(order);
               const isSaving = savingId === id;
               const currentStatus = order.status || "new";
 
@@ -388,6 +397,19 @@ export default function AdminOrdersPage() {
                       <strong className="saving">
                         Збереження...
                       </strong>
+                    )}
+
+                    {printId && (
+                      <Link
+                        href={`/admin/orders/${encodeURIComponent(
+                          printId
+                        )}/print`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="print-button"
+                      >
+                        🖨️ Друк / PDF
+                      </Link>
                     )}
                   </div>
 
@@ -637,7 +659,7 @@ export default function AdminOrdersPage() {
 
         .status-editor {
           display: grid;
-          grid-template-columns: 1fr auto;
+          grid-template-columns: minmax(0, 1fr) auto auto;
           gap: 14px;
           align-items: end;
           margin-bottom: 18px;
@@ -652,6 +674,28 @@ export default function AdminOrdersPage() {
         .saving {
           color: #8a6518;
           padding-bottom: 14px;
+        }
+
+        .print-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 46px;
+          padding: 0 18px;
+          border-radius: 12px;
+          background: #171717;
+          color: #ffffff;
+          text-decoration: none;
+          font-weight: 900;
+          white-space: nowrap;
+          transition:
+            transform 0.2s ease,
+            background 0.2s ease;
+        }
+
+        .print-button:hover {
+          transform: translateY(-2px);
+          background: #2a2117;
         }
 
         .items {

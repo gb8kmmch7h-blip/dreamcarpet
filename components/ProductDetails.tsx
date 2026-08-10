@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import FavoriteButton from "./FavoriteButton";
 import ProductCareBlock from "./ProductCareBlock";
 import RelatedProducts from "./RelatedProducts";
 import { useCart } from "../context/CartContext";
@@ -23,14 +22,16 @@ import type {
 type ProductDetailsProps = {
   product: Product;
   relatedProducts?: Product[];
+  initialWidth?: number;
+  initialLength?: number;
 };
 
 const baseNames: Record<ProductBase, string> = {
-  felt: "Повстяна",
-  jute: "Джутова",
-  woven: "Ткана",
-  latex: "Латексна",
-  stitched: "Прошита",
+  felt: "Повстяна основа",
+  jute: "Джутова основа",
+  woven: "Ткана основа",
+  latex: "Латексна основа",
+  stitched: "Прошита основа",
 };
 
 const productTypeNames: Record<ProductType, string> = {
@@ -69,6 +70,15 @@ const styleNames: Record<ProductStyle, string> = {
   geometric: "Геометрія",
 };
 
+const shapeNames: Record<ProductShape, string> = {
+  runner: "Доріжка",
+  rectangle: "Прямокутний",
+  square: "Квадратний",
+  round: "Круглий",
+  oval: "Овальний",
+  custom: "Під замовлення",
+};
+
 const roomNames: Record<ProductRoom, string> = {
   hallway: "Передпокій",
   corridor: "Коридор",
@@ -84,15 +94,6 @@ const roomNames: Record<ProductRoom, string> = {
   commercial: "Комерційне приміщення",
 };
 
-const shapeNames: Record<ProductShape, string> = {
-  runner: "Доріжка",
-  rectangle: "Прямокутник",
-  square: "Квадрат",
-  round: "Круглий",
-  oval: "Овальний",
-  custom: "Індивідуальна форма",
-};
-
 const priceTypeNames: Record<ProductPriceType, string> = {
   "square-meter": "м²",
   piece: "шт.",
@@ -100,228 +101,306 @@ const priceTypeNames: Record<ProductPriceType, string> = {
 
 function formatNumber(value: number) {
   return new Intl.NumberFormat("uk-UA", {
-    minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(value);
 }
 
-function getMeters(value: number) {
-  if (value > 20) {
-    return value / 100;
+function formatMm(value?: number) {
+  if (
+    typeof value !== "number" ||
+    !Number.isFinite(value)
+  ) {
+    return "";
   }
 
-  return value;
+  return `${formatNumber(value)} мм`;
 }
 
-function formatWidth(value: number) {
-  if (value > 20) {
-    return `${formatNumber(value)} см`;
-  }
-
-  return `${formatNumber(value)} м`;
-}
-
-function getProductType(product: Product): ProductType {
-  return product.productType ?? "runner";
-}
-
-function getProductPile(product: Product): ProductPile {
-  return product.pile ?? "flat";
-}
-
-function getProductPriceType(
-  product: Product
-): ProductPriceType {
-  return product.priceType ?? "square-meter";
+function safeText(value?: string) {
+  return value && value.trim() ? value : "";
 }
 
 export default function ProductDetails({
   product,
-  relatedProducts = [],
+  initialWidth,
+  initialLength,
 }: ProductDetailsProps) {
   const { addToCart } = useCart();
 
-  const images =
+  const priceType =
+    product.priceType ?? "square-meter";
+
+  const availableImages =
     Array.isArray(product.images) &&
     product.images.length > 0
       ? product.images
       : [];
 
-  const mainImage = images[0] || "";
-  const [selectedImage, setSelectedImage] =
-    useState(mainImage);
-
-  const colors =
-    Array.isArray(product.colors) &&
-    product.colors.length > 0
-      ? product.colors
-      : ["Не вказано"];
-
-  const widths =
+  const availableWidths =
     Array.isArray(product.widths) &&
     product.widths.length > 0
       ? product.widths
       : [1];
 
-  const lengths =
-    Array.isArray(product.lengths) &&
-    product.lengths.length > 0
-      ? product.lengths
-      : [];
+  const availableColors =
+    Array.isArray(product.colors) &&
+    product.colors.length > 0
+      ? product.colors
+      : ["Не вказано"];
 
-  const priceType = getProductPriceType(product);
-  const productType = getProductType(product);
-  const productPile = getProductPile(product);
-
-  const [selectedColor, setSelectedColor] =
-    useState(colors[0]);
-
-  const [selectedWidth, setSelectedWidth] =
-    useState(widths[0]);
-
-  const [length, setLength] = useState(
-    lengths.length > 0 ? lengths[0] : 1
+  const [activeImage, setActiveImage] = useState(
+    availableImages[0] ?? ""
   );
 
-  const [quantity, setQuantity] = useState(1);
+  const startWidth =
+    typeof initialWidth === "number" &&
+    Number.isFinite(initialWidth) &&
+    initialWidth > 0 &&
+    availableWidths.some(
+      (width) =>
+        Math.abs(Number(width) - initialWidth) < 0.01
+    )
+      ? initialWidth
+      : availableWidths[0];
+
+  const startLength =
+    typeof initialLength === "number" &&
+    Number.isFinite(initialLength) &&
+    initialLength > 0
+      ? String(initialLength)
+      : "1";
+
+  const [selectedWidth, setSelectedWidth] =
+    useState<number>(startWidth);
+
+  const [selectedColor, setSelectedColor] =
+    useState<string>(availableColors[0]);
+
+  const [length, setLength] = useState(startLength);
+
   const [message, setMessage] = useState("");
 
-  const widthInMeters = getMeters(selectedWidth);
+  const numericLength = Number(
+    length.replace(",", ".")
+  );
+
+  const validLength =
+    Number.isFinite(numericLength) &&
+    numericLength > 0
+      ? numericLength
+      : 0;
 
   const area = useMemo(() => {
-    if (priceType === "piece") {
-      return 1;
-    }
+    return selectedWidth * validLength;
+  }, [selectedWidth, validLength]);
 
-    return Math.max(widthInMeters * length, 0);
-  }, [priceType, widthInMeters, length]);
-
-  const itemPrice = useMemo(() => {
+  const totalPrice = useMemo(() => {
     if (priceType === "piece") {
       return product.price;
     }
 
-    return Math.round(product.price * area);
-  }, [priceType, product.price, area]);
+    return area * product.price;
+  }, [area, product.price, priceType]);
 
-  const totalPrice = itemPrice * quantity;
+  const characteristics = [
+    {
+      label: "Артикул",
+      value: product.article,
+    },
+    {
+      label: "Колекція",
+      value: product.collection,
+    },
+    {
+      label: "Тип товару",
+      value: product.productType
+        ? productTypeNames[product.productType]
+        : "",
+    },
+    {
+      label: "Основа",
+      value: product.base
+        ? baseNames[product.base]
+        : "",
+    },
+    {
+      label: "Тип ворсу",
+      value: product.pile
+        ? pileNames[product.pile]
+        : "",
+    },
+    {
+      label: "Висота ворсу",
+      value: formatMm(product.pileHeightMm),
+    },
+    {
+      label: "Загальна висота",
+      value: formatMm(product.totalHeightMm),
+    },
+    {
+      label: "Матеріал",
+      value: product.material
+        ? materialNames[product.material]
+        : "",
+    },
+    {
+      label: "Форма",
+      value: product.shape
+        ? shapeNames[product.shape]
+        : "",
+    },
+    {
+      label: "Бренд",
+      value: safeText(product.brand),
+    },
+    {
+      label: "Країна",
+      value: safeText(product.country),
+    },
+    {
+      label: "Ширини",
+      value:
+        Array.isArray(product.widths) &&
+        product.widths.length > 0
+          ? `${product.widths.join(", ")} м`
+          : "",
+    },
+    {
+      label: "Кольори",
+      value:
+        Array.isArray(product.colors) &&
+        product.colors.length > 0
+          ? product.colors.join(", ")
+          : "",
+    },
+  ].filter((item) => item.value);
 
-  const features = product.features ?? [];
-  const rooms = product.rooms ?? [];
-  const styles = product.styles ?? [];
+  const styles =
+    Array.isArray(product.styles) &&
+    product.styles.length > 0
+      ? product.styles
+          .map((style) => styleNames[style])
+          .filter(Boolean)
+      : [];
+
+  const rooms =
+    Array.isArray(product.rooms) &&
+    product.rooms.length > 0
+      ? product.rooms
+          .map((room) => roomNames[room])
+          .filter(Boolean)
+      : [];
+
+  const features =
+    Array.isArray(product.features) &&
+    product.features.length > 0
+      ? product.features
+      : [];
 
   function handleAddToCart() {
-    const safeLength =
-      priceType === "piece" ? 1 : length;
+    if (
+      priceType === "square-meter" &&
+      validLength <= 0
+    ) {
+      setMessage(
+        "Вкажіть правильну довжину доріжки."
+      );
+      return;
+    }
 
-    const safeArea =
-      priceType === "piece" ? 1 : area;
+    const normalizedLength =
+      Math.round(validLength * 100) / 100;
 
-    const cartId = [
+    const normalizedArea =
+      Math.round(area * 100) / 100;
+
+    const normalizedPrice =
+      Math.round(totalPrice * 100) / 100;
+
+    const cartItemId = [
       product.id,
-      selectedColor,
       selectedWidth,
-      safeLength,
+      normalizedLength,
+      selectedColor,
       priceType,
     ].join("-");
 
     addToCart({
-      id: cartId,
+      id: cartItemId,
       productId: product.id,
       name: product.name,
-      image: mainImage,
+      image: activeImage || availableImages[0] || "",
       color: selectedColor,
       unitPrice: product.price,
-      price: itemPrice,
-      width: widthInMeters,
-      length: safeLength,
-      area: safeArea,
+      price: normalizedPrice,
+      width: selectedWidth,
+      length:
+        priceType === "piece" ? 1 : normalizedLength,
+      area:
+        priceType === "piece" ? 1 : normalizedArea,
     });
 
-    setMessage("Товар додано до кошика ✅");
-
-    window.setTimeout(() => {
-      setMessage("");
-    }, 2500);
+    setMessage("Товар додано до кошика!");
   }
 
   return (
     <main
       style={{
         minHeight: "100vh",
-        padding: "45px 20px 80px",
-        background: "#f5f2ec",
-        color: "#181714",
+        padding: "35px 20px 70px",
+        background: "#f4f1ec",
+        color: "#171717",
       }}
     >
-      <section
+      <div
         style={{
-          width: "min(1350px, 100%)",
+          maxWidth: "1350px",
           margin: "0 auto",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            alignItems: "center",
-            marginBottom: "22px",
-            color: "#6f6a62",
-            fontSize: "14px",
-          }}
-        >
+        <div style={{ marginBottom: "25px" }}>
           <Link
             href="/catalog"
             style={{
               color: "#6d604f",
-              fontWeight: 800,
               textDecoration: "none",
+              fontWeight: 700,
             }}
           >
-            Каталог
+            ← Повернутися до каталогу
           </Link>
-
-          <span>/</span>
-
-          <span>{product.name}</span>
         </div>
 
         <div
           style={{
             display: "grid",
             gridTemplateColumns:
-              "minmax(0, 1.1fr) minmax(340px, 0.9fr)",
-            gap: "28px",
+              "repeat(auto-fit, minmax(320px, 1fr))",
+            gap: "45px",
             alignItems: "start",
           }}
-          className="product-top"
         >
-          <div
-            style={{
-              display: "grid",
-              gap: "14px",
-            }}
-          >
+          <section>
             <div
               style={{
                 position: "relative",
+                width: "100%",
+                aspectRatio: "1 / 1",
                 overflow: "hidden",
-                borderRadius: "26px",
-                background: "#eeeae2",
-                border: "1px solid #ded7ca",
-                aspectRatio: "1.15 / 1",
+                borderRadius: "24px",
+                background: "#dedad4",
+                boxShadow:
+                  "0 15px 45px rgba(0, 0, 0, 0.08)",
               }}
             >
-              {selectedImage ? (
+              {activeImage ? (
                 <Image
-                  src={selectedImage}
+                  src={activeImage}
                   alt={product.name}
                   fill
                   priority
-                  sizes="(max-width: 900px) 100vw, 650px"
-                  style={{
-                    objectFit: "cover",
-                  }}
+                  sizes="(max-width: 800px) 100vw, 50vw"
+                  style={{ objectFit: "cover" }}
                 />
               ) : (
                 <div
@@ -330,349 +409,512 @@ export default function ProductDetails({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#777169",
-                    fontWeight: 900,
-                    fontSize: "22px",
+                    color: "#777777",
+                    fontSize: "18px",
                   }}
                 >
-                  Немає фото
+                  Немає фотографії
                 </div>
               )}
 
               <div
                 style={{
                   position: "absolute",
-                  top: "14px",
-                  left: "14px",
+                  top: "16px",
+                  left: "16px",
                   display: "flex",
                   gap: "8px",
                   flexWrap: "wrap",
                 }}
               >
                 {product.new && (
-                  <span style={badgeStyle}>
+                  <span
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "9px",
+                      background: "#111111",
+                      color: "#ffffff",
+                      fontWeight: 700,
+                      fontSize: "13px",
+                    }}
+                  >
                     Новинка
                   </span>
                 )}
 
                 {product.featured && (
-                  <span style={badgeStyle}>Топ</span>
+                  <span
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "9px",
+                      background: "#ad8d61",
+                      color: "#ffffff",
+                      fontWeight: 700,
+                      fontSize: "13px",
+                    }}
+                  >
+                    Рекомендований
+                  </span>
                 )}
               </div>
             </div>
 
-            {images.length > 1 && (
+            {availableImages.length > 1 && (
               <div
                 style={{
                   display: "grid",
                   gridTemplateColumns:
-                    "repeat(auto-fill, minmax(90px, 1fr))",
-                  gap: "10px",
+                    "repeat(auto-fill, minmax(85px, 1fr))",
+                  gap: "12px",
+                  marginTop: "15px",
                 }}
               >
-                {images.map((image) => (
-                  <button
-                    key={image}
-                    type="button"
-                    onClick={() => setSelectedImage(image)}
-                    style={{
-                      position: "relative",
-                      overflow: "hidden",
-                      aspectRatio: "1 / 1",
-                      borderRadius: "14px",
-                      border:
-                        selectedImage === image
-                          ? "3px solid #d4af37"
-                          : "1px solid #ded7ca",
-                      background: "#eeeae2",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <Image
-                      src={image}
-                      alt={product.name}
-                      fill
-                      sizes="120px"
+                {availableImages.map(
+                  (image, index) => (
+                    <button
+                      key={`${image}-${index}`}
+                      type="button"
+                      onClick={() =>
+                        setActiveImage(image)
+                      }
                       style={{
-                        objectFit: "cover",
+                        position: "relative",
+                        aspectRatio: "1 / 1",
+                        padding: 0,
+                        overflow: "hidden",
+                        borderRadius: "12px",
+                        border:
+                          activeImage === image
+                            ? "3px solid #111111"
+                            : "2px solid transparent",
+                        background: "#dedad4",
+                        cursor: "pointer",
                       }}
-                    />
-                  </button>
-                ))}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${product.name}, фото ${
+                          index + 1
+                        }`}
+                        fill
+                        sizes="100px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </button>
+                  )
+                )}
               </div>
             )}
-          </div>
+          </section>
 
-          <aside
+
+
+          <section
             style={{
-              display: "grid",
-              gap: "20px",
-              padding: "28px",
-              borderRadius: "26px",
+              padding: "35px",
+              borderRadius: "24px",
               background: "#ffffff",
-              border: "1px solid #ded7ca",
               boxShadow:
-                "0 14px 35px rgba(44, 36, 24, 0.06)",
+                "0 15px 45px rgba(0, 0, 0, 0.07)",
             }}
           >
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "flex-start",
-                  gap: "14px",
-                  marginBottom: "14px",
-                }}
-              >
-                <div>
-                  <p
-                    style={{
-                      margin: "0 0 8px",
-                      color: "#8a7656",
-                      fontSize: "13px",
-                      fontWeight: 900,
-                      letterSpacing: "1.2px",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {product.article}
-                  </p>
+            <p
+              style={{
+                margin: "0 0 8px",
+                color: "#967a55",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+              }}
+            >
+              {product.collection || "DreamCarpet"}
+            </p>
 
-                  <h1
-                    style={{
-                      margin: 0,
-                      fontSize:
-                        "clamp(34px, 5vw, 54px)",
-                      lineHeight: 1.05,
-                    }}
-                  >
-                    {product.name}
-                  </h1>
-                </div>
+            <h1
+              style={{
+                margin: "0 0 15px",
+                fontSize: "clamp(34px, 5vw, 52px)",
+                lineHeight: 1.05,
+              }}
+            >
+              {product.name}
+            </h1>
 
-                <FavoriteButton
-                  productId={product.id}
-                  variant="inline"
-                />
-              </div>
-
-              <p
-                style={{
-                  margin: "14px 0 0",
-                  color: "#6f6a62",
-                  fontSize: "17px",
-                  lineHeight: 1.6,
-                }}
-              >
-                {product.description}
-              </p>
-            </div>
+            <p
+              style={{
+                margin: "0 0 22px",
+                color: "#777777",
+              }}
+            >
+              Артикул: {product.article}
+            </p>
 
             <div
               style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: "7px",
+                marginBottom: "25px",
                 padding: "18px",
-                borderRadius: "18px",
-                background: "#f8f5ef",
+                borderRadius: "15px",
+                background: product.inStock
+                  ? "#edf8ef"
+                  : "#fff0f0",
               }}
             >
               <strong
                 style={{
-                  fontSize: "36px",
+                  color: product.inStock
+                    ? "#27783c"
+                    : "#a62626",
+                }}
+              >
+                {product.inStock
+                  ? "✓ Товар у наявності"
+                  : "Товару немає в наявності"}
+              </strong>
+
+              <div
+                style={{
+                  marginTop: "6px",
+                  color: "#666666",
+                }}
+              >
+                Час виготовлення:{" "}
+                {product.productionTime ||
+                  "Уточнюється"}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "28px" }}>
+              <span
+                style={{
+                  fontSize: "38px",
+                  fontWeight: 900,
                 }}
               >
                 {formatNumber(product.price)} грн
-              </strong>
+              </span>
 
               <span
                 style={{
-                  color: "#716d65",
-                  fontWeight: 800,
+                  color: "#777777",
+                  fontSize: "17px",
                 }}
               >
+                {" "}
                 / {priceTypeNames[priceType]}
               </span>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gap: "15px",
-              }}
-            >
-              <label style={labelStyle}>
-                <span style={labelTextStyle}>
-                  Колір
-                </span>
+            {product.colors?.length > 0 && (
+              <div style={{ marginBottom: "25px" }}>
+                <strong>Оберіть колір:</strong>
 
-                <select
-                  value={selectedColor}
-                  onChange={(event) =>
-                    setSelectedColor(
-                      event.target.value
-                    )
-                  }
-                  style={inputStyle}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    marginTop: "10px",
+                  }}
                 >
-                  {colors.map((color) => (
-                    <option key={color} value={color}>
-                      {color}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  {product.colors.map(
+                    (color, index) => {
+                      const isSelected =
+                        selectedColor === color;
 
-              <label style={labelStyle}>
-                <span style={labelTextStyle}>
-                  Ширина
-                </span>
+                      return (
+                        <button
+                          key={color}
+                          type="button"
+                          onClick={() => {
+                            setSelectedColor(color);
+                            setMessage("");
 
-                <select
-                  value={selectedWidth}
-                  onChange={(event) =>
-                    setSelectedWidth(
-                      Number(event.target.value)
-                    )
-                  }
-                  style={inputStyle}
-                >
-                  {widths.map((width) => (
-                    <option
-                      key={width}
-                      value={width}
-                    >
-                      {formatWidth(width)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {priceType === "square-meter" && (
-                <label style={labelStyle}>
-                  <span style={labelTextStyle}>
-                    Довжина, м
-                  </span>
-
-                  {lengths.length > 0 ? (
-                    <select
-                      value={length}
-                      onChange={(event) =>
-                        setLength(
-                          Number(event.target.value)
-                        )
-                      }
-                      style={inputStyle}
-                    >
-                      {lengths.map((itemLength) => (
-                        <option
-                          key={itemLength}
-                          value={itemLength}
+                            if (availableImages[index]) {
+                              setActiveImage(
+                                availableImages[index]
+                              );
+                            }
+                          }}
+                          style={{
+                            padding: "9px 14px",
+                            borderRadius: "20px",
+                            border: isSelected
+                              ? "2px solid #111111"
+                              : "1px solid #d4d4d4",
+                            background: isSelected
+                              ? "#111111"
+                              : "#eeeeee",
+                            color: isSelected
+                              ? "#ffffff"
+                              : "#111111",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
                         >
-                          {formatNumber(itemLength)} м
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
+                          {color}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    color: "#666666",
+                  }}
+                >
+                  Вибрано:{" "}
+                  <strong>{selectedColor}</strong>
+                </p>
+              </div>
+            )}
+
+            {priceType === "square-meter" && (
+              <>
+                <div style={{ marginBottom: "25px" }}>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "10px",
+                      fontWeight: 800,
+                      fontSize: "17px",
+                    }}
+                  >
+                    Оберіть ширину
+                  </label>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "10px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {availableWidths.map((width) => (
+                      <button
+                        key={width}
+                        type="button"
+                        onClick={() =>
+                          setSelectedWidth(width)
+                        }
+                        style={{
+                          minWidth: "70px",
+                          padding: "12px 15px",
+                          borderRadius: "10px",
+                          border:
+                            selectedWidth === width
+                              ? "2px solid #111111"
+                              : "1px solid #cccccc",
+                          background:
+                            selectedWidth === width
+                              ? "#111111"
+                              : "#ffffff",
+                          color:
+                            selectedWidth === width
+                              ? "#ffffff"
+                              : "#111111",
+                          cursor: "pointer",
+                          fontSize: "16px",
+                          fontWeight: 700,
+                        }}
+                      >
+                        {width} м
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "25px" }}>
+                  <label
+                    htmlFor="product-length"
+                    style={{
+                      display: "block",
+                      marginBottom: "10px",
+                      fontWeight: 800,
+                      fontSize: "17px",
+                    }}
+                  >
+                    Вкажіть довжину
+                  </label>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
                     <input
+                      id="product-length"
                       type="number"
                       min="0.1"
                       step="0.1"
                       value={length}
-                      onChange={(event) =>
-                        setLength(
-                          Number(event.target.value)
-                        )
-                      }
-                      style={inputStyle}
+                      onChange={(event) => {
+                        setLength(event.target.value);
+                        setMessage("");
+                      }}
+                      style={{
+                        width: "160px",
+                        padding: "13px",
+                        border: "1px solid #bbbbbb",
+                        borderRadius: "10px",
+                        background: "#ffffff",
+                        color: "#111111",
+                        fontSize: "17px",
+                      }}
                     />
-                  )}
-                </label>
-              )}
 
-              <label style={labelStyle}>
-                <span style={labelTextStyle}>
-                  Кількість
-                </span>
+                    <strong>метрів</strong>
+                  </div>
+                </div>
 
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={quantity}
-                  onChange={(event) =>
-                    setQuantity(
-                      Math.max(
-                        1,
-                        Number(event.target.value)
-                      )
-                    )
-                  }
-                  style={inputStyle}
-                />
-              </label>
-            </div>
+                <div
+                  style={{
+                    marginBottom: "25px",
+                    padding: "22px",
+                    borderRadius: "17px",
+                    background: "#f5f2ed",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      gap: "15px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <span>Ширина:</span>
+                    <strong>{selectedWidth} м</strong>
+                  </div>
 
-            <div
-              style={{
-                display: "grid",
-                gap: "8px",
-                padding: "18px",
-                borderRadius: "18px",
-                background: "#f5f2ec",
-                color: "#4d4942",
-                fontWeight: 800,
-              }}
-            >
-              {priceType === "square-meter" && (
-                <>
-                  <div style={summaryRowStyle}>
-                    <span>Площа</span>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      gap: "15px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <span>Довжина:</span>
+                    <strong>
+                      {validLength
+                        ? formatNumber(validLength)
+                        : 0}{" "}
+                      м
+                    </strong>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      gap: "15px",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    <span>Площа:</span>
                     <strong>
                       {formatNumber(area)} м²
                     </strong>
                   </div>
 
-                  <div style={summaryRowStyle}>
-                    <span>Ціна за позицію</span>
-                    <strong>
-                      {formatNumber(itemPrice)} грн
+                  <div
+                    style={{
+                      paddingTop: "15px",
+                      borderTop:
+                        "1px solid #d6d0c7",
+                      display: "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems: "center",
+                      gap: "15px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Загальна ціна:
+                    </span>
+
+                    <strong
+                      style={{
+                        fontSize: "30px",
+                      }}
+                    >
+                      {formatNumber(totalPrice)} грн
                     </strong>
                   </div>
-                </>
-              )}
+                </div>
+              </>
+            )}
 
-              <div style={summaryRowStyle}>
-                <span>Разом</span>
+            {priceType === "piece" && (
+              <div
+                style={{
+                  marginBottom: "25px",
+                  padding: "22px",
+                  borderRadius: "17px",
+                  background: "#f5f2ed",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 700,
+                  }}
+                >
+                  Ціна за товар:
+                </span>
+
                 <strong
                   style={{
-                    fontSize: "26px",
+                    display: "block",
+                    marginTop: "10px",
+                    fontSize: "30px",
                   }}
                 >
                   {formatNumber(totalPrice)} грн
                 </strong>
               </div>
-            </div>
+            )}
 
             <button
               type="button"
               onClick={handleAddToCart}
-              disabled={!product.inStock}
+              disabled={
+                !product.inStock ||
+                (priceType === "square-meter" &&
+                  validLength <= 0)
+              }
               style={{
-                padding: "16px",
+                width: "100%",
+                padding: "17px",
                 border: "none",
-                borderRadius: "14px",
-                background: product.inStock
-                  ? "#181714"
-                  : "#999999",
+                borderRadius: "12px",
+                background:
+                  product.inStock &&
+                  (priceType === "piece" ||
+                    validLength > 0)
+                    ? "#111111"
+                    : "#999999",
                 color: "#ffffff",
                 fontSize: "18px",
-                fontWeight: 900,
-                cursor: product.inStock
-                  ? "pointer"
-                  : "not-allowed",
+                fontWeight: 800,
+                cursor:
+                  product.inStock &&
+                  (priceType === "piece" ||
+                    validLength > 0)
+                    ? "pointer"
+                    : "not-allowed",
               }}
             >
               {product.inStock
@@ -683,130 +925,135 @@ export default function ProductDetails({
             {message && (
               <div
                 style={{
+                  marginTop: "14px",
                   padding: "13px",
-                  borderRadius: "12px",
-                  background: "#ecf9f0",
-                  color: "#216d38",
-                  fontWeight: 900,
+                  borderRadius: "10px",
+                  background: message.includes(
+                    "додано"
+                  )
+                    ? "#edf8ef"
+                    : "#fff0f0",
+                  color: message.includes("додано")
+                    ? "#27783c"
+                    : "#a62626",
+                  fontWeight: 700,
                   textAlign: "center",
                 }}
               >
                 {message}
+
+                {message.includes("додано") && (
+                  <div style={{ marginTop: "10px" }}>
+                    <Link
+                      href="/cart"
+                      style={{
+                        color: "#111111",
+                        fontWeight: 800,
+                      }}
+                    >
+                      Перейти до кошика →
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
-            <Link
-              href="/cart"
-              style={{
-                textAlign: "center",
-                color: "#181714",
-                fontWeight: 800,
-              }}
-            >
-              Перейти до кошика →
-            </Link>
-          </aside>
+          </section>
         </div>
 
-        <section style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>
+        <ProductCareBlock product={product} />
+
+        <section
+          style={{
+            marginTop: "45px",
+            padding: "35px",
+            borderRadius: "24px",
+            background: "#ffffff",
+          }}
+        >
+          <h2
+            style={{
+              marginTop: 0,
+              fontSize: "30px",
+            }}
+          >
             Характеристики
           </h2>
 
-          <div style={characteristicsGridStyle}>
-            <Characteristic
-              label="Колекція"
-              value={product.collection}
-            />
+          {characteristics.length > 0 ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: "12px",
+              }}
+            >
+              {characteristics.map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "14px",
+                    background: "#f5f2ed",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#777777",
+                      fontSize: "14px",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    {item.label}
+                  </div>
 
-            <Characteristic
-              label="Артикул"
-              value={product.article}
-            />
-
-            <Characteristic
-              label="Основа"
-              value={baseNames[product.base]}
-            />
-
-            <Characteristic
-              label="Тип товару"
-              value={productTypeNames[productType]}
-            />
-
-            <Characteristic
-              label="Ворс"
-              value={pileNames[productPile]}
-            />
-
-            {product.pileHeightMm ? (
-              <Characteristic
-                label="Висота ворсу"
-                value={`${product.pileHeightMm} мм`}
-              />
-            ) : null}
-
-            {product.totalHeightMm ? (
-              <Characteristic
-                label="Загальна висота"
-                value={`${product.totalHeightMm} мм`}
-              />
-            ) : null}
-
-            {product.material ? (
-              <Characteristic
-                label="Матеріал"
-                value={materialNames[product.material]}
-              />
-            ) : null}
-
-            {product.shape ? (
-              <Characteristic
-                label="Форма"
-                value={shapeNames[product.shape]}
-              />
-            ) : null}
-
-            {product.brand ? (
-              <Characteristic
-                label="Бренд"
-                value={product.brand}
-              />
-            ) : null}
-
-            {product.country ? (
-              <Characteristic
-                label="Країна"
-                value={product.country}
-              />
-            ) : null}
-
-            <Characteristic
-              label="Час виготовлення"
-              value={product.productionTime}
-            />
-
-            <Characteristic
-              label="Наявність"
-              value={
-                product.inStock
-                  ? "В наявності"
-                  : "Немає в наявності"
-              }
-            />
-          </div>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>Характеристики поки не додані.</p>
+          )}
         </section>
 
         {features.length > 0 && (
-          <section style={sectionStyle}>
-            <h2 style={sectionTitleStyle}>
+          <section
+            style={{
+              marginTop: "25px",
+              padding: "35px",
+              borderRadius: "24px",
+              background: "#ffffff",
+            }}
+          >
+            <h2
+              style={{
+                marginTop: 0,
+                fontSize: "30px",
+              }}
+            >
               Особливості
             </h2>
 
-            <div style={tagGridStyle}>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "10px",
+              }}
+            >
               {features.map((feature) => (
-                <span key={feature} style={tagStyle}>
-                  {feature}
+                <span
+                  key={feature}
+                  style={{
+                    padding: "11px 14px",
+                    borderRadius: "999px",
+                    background: "#111111",
+                    color: "#ffffff",
+                    fontWeight: 700,
+                  }}
+                >
+                  ✓ {feature}
                 </span>
               ))}
             </div>
@@ -814,201 +1061,112 @@ export default function ProductDetails({
         )}
 
         {(styles.length > 0 || rooms.length > 0) && (
-          <section style={sectionStyle}>
-            <h2 style={sectionTitleStyle}>
+          <section
+            style={{
+              marginTop: "25px",
+              padding: "35px",
+              borderRadius: "24px",
+              background: "#ffffff",
+            }}
+          >
+            <h2
+              style={{
+                marginTop: 0,
+                fontSize: "30px",
+              }}
+            >
               Підходить для
             </h2>
 
-            <div
-              style={{
-                display: "grid",
-                gap: "18px",
-              }}
-            >
-              {rooms.length > 0 && (
-                <div>
-                  <h3 style={miniTitleStyle}>
-                    Кімнати
-                  </h3>
+            {rooms.length > 0 && (
+              <>
+                <h3>Приміщення</h3>
 
-                  <div style={tagGridStyle}>
-                    {rooms.map((room) => (
-                      <span
-                        key={room}
-                        style={tagStyle}
-                      >
-                        {roomNames[room]}
-                      </span>
-                    ))}
-                  </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                    marginBottom: "22px",
+                  }}
+                >
+                  {rooms.map((room) => (
+                    <span
+                      key={room}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "999px",
+                        background: "#f5f2ed",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {room}
+                    </span>
+                  ))}
                 </div>
-              )}
+              </>
+            )}
 
-              {styles.length > 0 && (
-                <div>
-                  <h3 style={miniTitleStyle}>
-                    Стилі
-                  </h3>
+            {styles.length > 0 && (
+              <>
+                <h3>Стиль</h3>
 
-                  <div style={tagGridStyle}>
-                    {styles.map((style) => (
-                      <span
-                        key={style}
-                        style={tagStyle}
-                      >
-                        {styleNames[style]}
-                      </span>
-                    ))}
-                  </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                  }}
+                >
+                  {styles.map((style) => (
+                    <span
+                      key={style}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: "999px",
+                        background: "#f5f2ed",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {style}
+                    </span>
+                  ))}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </section>
         )}
 
-        <ProductCareBlock product={product} />
-
-        <RelatedProducts products={relatedProducts} />
-
-        <section style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>
+        <section
+          style={{
+            marginTop: "25px",
+            padding: "35px",
+            borderRadius: "24px",
+            background: "#ffffff",
+          }}
+        >
+          <h2
+            style={{
+              marginTop: 0,
+              fontSize: "30px",
+            }}
+          >
             Опис товару
           </h2>
 
-          <p
+          <div
             style={{
-              margin: 0,
-              color: "#4d4942",
+              color: "#555555",
               fontSize: "17px",
-              lineHeight: 1.7,
+              lineHeight: 1.75,
+              whiteSpace: "pre-line",
             }}
           >
-            {product.description}
-          </p>
+            {product.description ||
+              "Опис цього товару поки що не доданий."}
+          </div>
         </section>
-      </section>
-
-      <style jsx>{`
-        @media (max-width: 950px) {
-          .product-top {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+      </div>
     </main>
   );
 }
-
-function Characteristic({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string;
-}) {
-  if (!value) {
-    return null;
-  }
-
-  return (
-    <div
-      style={{
-        padding: "14px",
-        borderRadius: "14px",
-        background: "#f8f5ef",
-      }}
-    >
-      <span
-        style={{
-          display: "block",
-          marginBottom: "5px",
-          color: "#8a7656",
-          fontSize: "13px",
-          fontWeight: 900,
-        }}
-      >
-        {label}
-      </span>
-
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-const badgeStyle = {
-  borderRadius: "999px",
-  background: "#181714",
-  color: "#ffffff",
-  padding: "7px 10px",
-  fontSize: "12px",
-  fontWeight: 900,
-};
-
-const labelStyle = {
-  display: "grid",
-  gap: "7px",
-};
-
-const labelTextStyle = {
-  fontSize: "13px",
-  fontWeight: 900,
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box" as const,
-  border: "1px solid #d8d0c3",
-  borderRadius: "12px",
-  background: "#ffffff",
-  color: "#181714",
-  padding: "12px 13px",
-  font: "inherit",
-  outline: "none",
-};
-
-const summaryRowStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "15px",
-};
-
-const sectionStyle = {
-  marginTop: "28px",
-  padding: "26px",
-  borderRadius: "24px",
-  background: "#ffffff",
-  border: "1px solid #ded7ca",
-  boxShadow: "0 14px 35px rgba(44, 36, 24, 0.06)",
-};
-
-const sectionTitleStyle = {
-  margin: "0 0 18px",
-  fontSize: "30px",
-};
-
-const characteristicsGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit, minmax(210px, 1fr))",
-  gap: "12px",
-};
-
-const tagGridStyle = {
-  display: "flex",
-  flexWrap: "wrap" as const,
-  gap: "10px",
-};
-
-const tagStyle = {
-  display: "inline-flex",
-  borderRadius: "999px",
-  background: "#f5f2ec",
-  color: "#4d4942",
-  padding: "10px 13px",
-  fontWeight: 800,
-};
-
-const miniTitleStyle = {
-  margin: "0 0 10px",
-  fontSize: "20px",
-};

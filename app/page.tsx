@@ -338,7 +338,13 @@ export default function HomePage() {
 
         <section className="products-section">
           <div className="section-title">
-            <h2>Популярні товари</h2>
+            <div>
+              <p className="section-kicker">🔥 Хіти продажів</p>
+              <h2>Найчастіше обирають</h2>
+              <p className="section-subtitle">
+                Популярні моделі DreamCarpet, які варто переглянути першими.
+              </p>
+            </div>
 
             <Link href="/catalog">
               Дивитися всі →
@@ -365,6 +371,8 @@ export default function HomePage() {
                     className="product-card"
                   >
                     <div className="product-image">
+                      <span className="hit-badge">🔥 Хіт продажів</span>
+
                       {image ? (
                         <Image
                           src={image}
@@ -397,6 +405,72 @@ export default function HomePage() {
             </div>
           )}
         </section>
+
+        <section className="reviews-section">
+          <div className="reviews-heading">
+            <p className="section-kicker">⭐ Відгуки покупців</p>
+            <h2>Нам довіряють</h2>
+            <p>
+              Поки це демонстраційні відгуки для запуску сайту.
+              Після перших реальних замовлень замінимо їх на справжні.
+            </p>
+          </div>
+
+          <div className="reviews-grid">
+            <article className="review-card">
+              <div className="stars">★★★★★</div>
+              <p>“Замовляли доріжку в коридор. Все підійшло за розміром, виглядає дуже гарно.”</p>
+              <div className="review-author">
+                <strong>Приклад відгуку</strong>
+                <span>DreamCarpet</span>
+              </div>
+            </article>
+
+            <article className="review-card featured-review">
+              <div className="stars">★★★★★</div>
+              <p>“Зручно, що можна одразу порахувати ціну за потрібним розміром і підібрати основу.”</p>
+              <div className="review-author">
+                <strong>Приклад відгуку</strong>
+                <span>DreamCarpet</span>
+              </div>
+            </article>
+
+            <article className="review-card">
+              <div className="stars">★★★★★</div>
+              <p>“Консультант допоміг зорієнтуватися в каталозі. Замовлення оформлюється швидко.”</p>
+              <div className="review-author">
+                <strong>Приклад відгуку</strong>
+                <span>DreamCarpet</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section className="why-section">
+          <div className="why-heading">
+            <p className="section-kicker">DreamCarpet</p>
+            <h2>Чому з нами зручно</h2>
+          </div>
+
+          <div className="why-grid">
+            <div className="why-card"><span>🚚</span><strong>Зручна доставка</strong><p>Оформлення доставки прямо під час замовлення.</p></div>
+            <div className="why-card"><span>📏</span><strong>Розрахунок за розміром</strong><p>Одразу бачите орієнтовну вартість потрібного розміру.</p></div>
+            <div className="why-card"><span>🔎</span><strong>Пошук і фільтри</strong><p>Швидко знаходьте потрібну основу, колір і тип килима.</p></div>
+            <div className="why-card"><span>📦</span><strong>Статус замовлення</strong><p>Після покупки можна перевіряти стан замовлення на сайті.</p></div>
+          </div>
+        </section>
+
+        <section className="assistant-cta">
+          <div className="assistant-content">
+            <span className="assistant-icon">🤖</span>
+            <div>
+              <p className="assistant-label">Помічник DreamCarpet</p>
+              <h2>Не знаєте, який килим вибрати?</h2>
+              <p>Напишіть, де буде килим, який потрібен колір, розмір і бюджет — помічник допоможе звузити вибір.</p>
+            </div>
+            <Link href="/assistant" className="assistant-cta-button">Почати підбір →</Link>
+          </div>
+        </section>
       </main>
 
       <style jsx>{`
@@ -422,7 +496,10 @@ export default function HomePage() {
         .choice-section,
         .category-section,
         .calculator-section,
-        .products-section {
+        .products-section,
+        .reviews-section,
+        .why-section,
+        .assistant-cta {
           max-width: 1180px;
           margin: 0 auto;
           padding-left: 20px;
@@ -500,7 +577,10 @@ export default function HomePage() {
         .choice-section,
         .category-section,
         .calculator-section,
-        .products-section {
+        .products-section,
+        .reviews-section,
+        .why-section,
+        .assistant-cta {
           padding-top: 34px;
           padding-bottom: 34px;
         }
@@ -750,15 +830,49 @@ export default function HomePage() {
           font-weight: 900;
         }
 
+
+        .section-kicker { margin: 0 0 8px; color: #8f6717; font-size: 13px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; }
+        .section-subtitle { max-width: 620px; margin: 8px 0 0; color: #5e5245; font-size: 16px; line-height: 1.5; }
+        .product-image { overflow: hidden; }
+        .hit-badge { position: absolute; top: 12px; left: 12px; z-index: 4; display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border-radius: 999px; background: #171717; color: #ffd95a !important; font-size: 12px !important; font-weight: 900 !important; box-shadow: 0 8px 22px rgba(0,0,0,.22); }
+        .reviews-heading { max-width: 700px; margin-bottom: 22px; }
+        .reviews-heading > p:last-child { margin: 0; color: #5e5245; line-height: 1.6; }
+        .reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .review-card { display: flex; min-height: 220px; flex-direction: column; justify-content: space-between; padding: 24px; border-radius: 24px; background: #fff2dc; border: 1px solid #b9892b; box-shadow: 0 18px 45px rgba(40,30,15,.11); }
+        .featured-review { background: #171717; color: #fff; border-color: #d4af37; }
+        .stars { color: #d4af37; font-size: 20px; letter-spacing: 3px; }
+        .review-card > p { margin: 18px 0; font-size: 18px; line-height: 1.6; }
+        .review-author { display: grid; gap: 4px; }
+        .review-author span { color: #8f7859; font-size: 14px; font-weight: 700; }
+        .featured-review .review-author span { color: #d8c9b2; }
+        .why-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .why-card { display: grid; gap: 10px; min-height: 190px; padding: 22px; border-radius: 22px; background: rgba(255,242,220,.82); border: 1px solid rgba(185,137,43,.65); box-shadow: 0 16px 38px rgba(40,30,15,.09); }
+        .why-card > span { font-size: 34px; }
+        .why-card strong { font-size: 19px; }
+        .why-card p { margin: 0; color: #5e5245; line-height: 1.55; }
+        .assistant-content { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 24px; align-items: center; padding: 34px; border-radius: 30px; background: radial-gradient(circle at top right, rgba(212,175,55,.28), transparent 34%), linear-gradient(135deg,#101010 0%,#211a11 100%); border: 1px solid #d4af37; color: #fff; box-shadow: 0 26px 65px rgba(25,18,8,.25); }
+        .assistant-icon { display: grid; width: 74px; height: 74px; place-items: center; border-radius: 22px; background: #d4af37; font-size: 36px; }
+        .assistant-label { margin: 0 0 6px; color: #d4af37; font-size: 13px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; }
+        .assistant-content h2 { color: #fff; margin-bottom: 10px; font-size: clamp(28px,4vw,44px); }
+        .assistant-content > div > p:last-child { max-width: 650px; margin: 0; color: #e4d6c1; line-height: 1.6; }
+        .assistant-cta-button { display: inline-flex; min-height: 58px; align-items: center; justify-content: center; padding: 0 24px; border-radius: 15px; background: linear-gradient(135deg,#d4af37,#ffd95a); color: #111; text-decoration: none; font-weight: 900; white-space: nowrap; box-shadow: 0 16px 36px rgba(212,175,55,.32); }
+
         @media (max-width: 950px) {
           .choice-grid,
           .calculator-section,
-          .products-grid {
+          .products-grid,
+          .reviews-grid,
+          .assistant-content {
             grid-template-columns: 1fr;
           }
 
+          .why-grid,
           .category-grid {
             grid-template-columns: repeat(2, 1fr);
+          }
+
+          .assistant-cta-button {
+            width: 100%;
           }
         }
 
@@ -776,8 +890,14 @@ export default function HomePage() {
             flex-direction: column;
           }
 
-          .category-grid {
+          .category-grid,
+          .why-grid,
+          .reviews-grid {
             grid-template-columns: 1fr;
+          }
+
+          .assistant-content {
+            padding: 24px 20px;
           }
 
           .inputs {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import ProductDetails from "../../../components/ProductDetails";
+import ProductReviews from "../../../components/ProductReviews";
 import { getAllProducts } from "../../../lib/getAllProducts";
 import type { Product } from "../../../types/product";
 
@@ -14,6 +15,10 @@ const siteUrl =
 type ProductPageProps = {
   params: Promise<{
     id: string;
+  }>;
+  searchParams: Promise<{
+    width?: string;
+    length?: string;
   }>;
 };
 
@@ -88,18 +93,13 @@ function absoluteUrl(pathOrUrl: string) {
 
 async function getProduct(id: string) {
   const products = await getAllProducts();
-
   const productId = Number(id);
 
   if (!Number.isInteger(productId)) {
     return null;
   }
 
-  return (
-    products.find(
-      (item) => item.id === productId
-    ) ?? null
-  );
+  return products.find((item) => item.id === productId) ?? null;
 }
 
 function getMatchScore(
@@ -250,7 +250,6 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
-
   const product = await getProduct(id);
 
   if (!product) {
@@ -298,13 +297,26 @@ export async function generateMetadata({
   };
 }
 
+function parsePositiveNumber(value?: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const parsed = Number(value.replace(",", "."));
+
+  return Number.isFinite(parsed) && parsed > 0
+    ? parsed
+    : undefined;
+}
+
 export default async function ProductPage({
   params,
+  searchParams,
 }: ProductPageProps) {
   const { id } = await params;
+  const query = await searchParams;
 
   const products = await getAllProducts();
-
   const productId = Number(id);
 
   if (!Number.isInteger(productId)) {
@@ -312,9 +324,7 @@ export default async function ProductPage({
   }
 
   const product =
-    products.find(
-      (item) => item.id === productId
-    ) ?? null;
+    products.find((item) => item.id === productId) ?? null;
 
   if (!product) {
     notFound();
@@ -324,6 +334,12 @@ export default async function ProductPage({
     products,
     product
   );
+
+  const initialWidth =
+    parsePositiveNumber(query.width);
+
+  const initialLength =
+    parsePositiveNumber(query.length);
 
   const productJsonLd =
     createProductJsonLd(product);
@@ -350,6 +366,13 @@ export default async function ProductPage({
       <ProductDetails
         product={product}
         relatedProducts={relatedProducts}
+        initialWidth={initialWidth}
+        initialLength={initialLength}
+      />
+
+      <ProductReviews
+        productId={product.id}
+        productName={product.name}
       />
     </>
   );

@@ -783,7 +783,7 @@
     "id": 25,
     "orderNumber": 25,
     "createdAt": "2026-07-24T16:26:58.566Z",
-    "status": "new",
+    "status": "completed",
     "accessToken": "998f2459-76e4-4545-848c-98f7a783b246",
     "customerName": "Діма Кубішин",
     "phone": "0938668670",
@@ -791,8 +791,8 @@
     "city": "Хмельницький",
     "warehouse": "віділення 31",
     "paymentMethod": "Накладений платіж",
-    "paidAmount": 0,
-    "amountDue": 2000,
+    "paidAmount": 1234,
+    "amountDue": 766,
     "comment": "ро",
     "total": 2000,
     "area": 5,
@@ -807,13 +807,15 @@
         "quantity": 1,
         "price": 2000
       }
-    ]
+    ],
+    "updatedAt": "2026-08-04T17:44:58.615Z",
+    "statusUpdatedAt": "2026-08-04T17:44:58.615Z"
   },
   {
     "id": 26,
     "orderNumber": 26,
     "createdAt": "2026-07-27T15:18:36.854Z",
-    "status": "processing",
+    "status": "completed",
     "accessToken": "64bee215-f70c-48a1-8d58-1e05590269c7",
     "customerName": "Діма Кубішин",
     "phone": "0938668670",
@@ -821,8 +823,8 @@
     "city": "Хмельницький",
     "warehouse": "віділення 31",
     "paymentMethod": "Накладений платіж",
-    "paidAmount": 0,
-    "amountDue": 320,
+    "paidAmount": 320,
+    "amountDue": 0,
     "comment": "Без коментаря",
     "total": 320,
     "area": 0.8,
@@ -838,7 +840,187 @@
         "price": 320
       }
     ],
-    "updatedAt": "2026-07-27T15:21:54.920Z",
-    "statusUpdatedAt": "2026-07-27T15:21:54.920Z"
+    "updatedAt": "2026-08-04T17:44:30.205Z",
+    "statusUpdatedAt": "2026-08-04T17:44:30.205Z"
+  },
+  {
+    "id": 27,
+    "orderNumber": 27,
+    "createdAt": "2026-08-10T13:02:55.723Z",
+    "status": "new",
+    "accessToken": "fd366d1d-bdea-4443-b874-f32bfcf543b8",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Онлайн-оплата — Apple Pay / Google Pay / картка",
+    "paidAmount": 0,
+    "amountDue": 13000,
+    "comment": "Без коментаря",
+    "total": 13000,
+    "area": 32.5,
+    "items": [
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 2.5,
+        "length": 13,
+        "area": 32.5,
+        "quantity": 1,
+        "price": 13000
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "orderNumber": 28,
+    "createdAt": "2026-08-10T13:11:37.785Z",
+    "status": "new",
+    "accessToken": "6673f797-178a-46e8-a2f4-b1eec5c9bceb",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Онлайн-оплата — Apple Pay / Google Pay / картка",
+    "paidAmount": 0,
+    "amountDue": 15600,
+    "comment": "Без коментаря",
+    "total": 15600,
+    "area": 39,
+    "items": [
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 3,
+        "length": 13,
+        "area": 39,
+        "quantity": 1,
+        "price": 15600
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "orderNumber": 29,
+    "createdAt": "2026-08-10T13:20:28.689Z",
+    "status": "new",
+    "accessToken": "743b33b5-0b29-42d3-b47b-273e3a2d19fe",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Онлайн-оплата — Apple Pay / Google Pay / картка",
+    "paidAmount": 0,
+    "amountDue": 8400,
+    "comment": "Без коментаря",
+    "total": 8400,
+    "area": 21,
+    "items": [
+      {
+        "name": "Linea",
+        "image": "/products/1784579167166-zdigof-photo-6-2026-07-20-22-28-09.jpg",
+        "color": "сірий",
+        "width": 0.8,
+        "length": 12,
+        "area": 9.600000000000001,
+        "quantity": 1,
+        "price": 3840
+      },
+      {
+        "name": "Versal",
+        "image": "/products/1784578934075-70xqi1-photo-1-2026-07-16-22-18-59.jpg",
+        "color": "коричневий",
+        "width": 3,
+        "length": 3,
+        "area": 9,
+        "quantity": 1,
+        "price": 3600
+      },
+      {
+        "name": "Akva",
+        "image": "/products/1784578392158-8ptstz-photo-5-2026-07-20-22-28-09.jpg",
+        "color": "синій",
+        "width": 1.2,
+        "length": 2,
+        "area": 2.4,
+        "quantity": 1,
+        "price": 960
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "orderNumber": 30,
+    "createdAt": "2026-08-10T14:05:28.675Z",
+    "status": "new",
+    "accessToken": "dfd52fff-0dbf-4bdb-8cba-500cf3aba3fc",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 2326.4,
+    "comment": "врапт",
+    "total": 2326.4,
+    "area": 5.82,
+    "items": [
+      {
+        "name": "Стрічка",
+        "image": "/products/1784394538410-q1vce8-photo-16-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 1.2,
+        "length": 1.2,
+        "area": 1.44,
+        "quantity": 2,
+        "price": 576
+      },
+      {
+        "name": "Стрічка",
+        "image": "/products/1784394538410-q1vce8-photo-16-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 0.8,
+        "length": 3.67,
+        "area": 2.94,
+        "quantity": 1,
+        "price": 1174.4
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "orderNumber": 31,
+    "createdAt": "2026-08-10T15:34:25.150Z",
+    "status": "new",
+    "accessToken": "be69072b-baa8-4842-b478-7d30fc90523a",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Передоплата 200 грн",
+    "paidAmount": 200,
+    "amountDue": 120,
+    "comment": "Без коментаря",
+    "total": 320,
+    "area": 0.8,
+    "items": [
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      }
+    ]
   }
 ]
