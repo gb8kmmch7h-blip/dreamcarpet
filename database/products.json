@@ -600,5 +600,81 @@
     "images": [
       "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg"
     ]
+  },
+  {
+    "id": 17,
+    "slug": "kolizei-17",
+    "article": "MB-014",
+    "name": "Колізей",
+    "category": "budget",
+    "base": "felt",
+    "productType": "runner",
+    "pile": "flat",
+    "rooms": [],
+    "styles": [],
+    "collection": "PRINT",
+    "description": "супер",
+    "features": [],
+    "price": 400,
+    "priceType": "square-meter",
+    "colors": [
+      "Бежево-коричневий"
+    ],
+    "widths": [
+      0.8,
+      1,
+      1.2,
+      1.5,
+      2,
+      2.5,
+      3,
+      4
+    ],
+    "lengths": [],
+    "productionTime": "1–3 дні",
+    "inStock": true,
+    "featured": false,
+    "new": true,
+    "seoKeywords": [],
+    "images": [
+      "/products/1786390783061-8uqv2x-photo-20-2026-07-16-22-18-59.jpg"
+    ]
+  },
+  {
+    "id": 18,
+    "slug": "ol-18",
+    "article": "TK-001",
+    "name": "ol",
+    "category": "premium",
+    "base": "woven",
+    "productType": "runner",
+    "pile": "flat",
+    "rooms": [],
+    "styles": [],
+    "collection": "ssjjsr",
+    "description": "4yuq",
+    "features": [],
+    "price": 5666,
+    "priceType": "square-meter",
+    "colors": [
+      "Бежево-коричневий"
+    ],
+    "widths": [
+      0.8,
+      1,
+      1.2,
+      1.5,
+      2,
+      2.5,
+      3,
+      4
+    ],
+    "lengths": [],
+    "productionTime": "1–3 дні",
+    "inStock": true,
+    "featured": false,
+    "new": true,
+    "seoKeywords": [],
+    "images": []
   }
 ]

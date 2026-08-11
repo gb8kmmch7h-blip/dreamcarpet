@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   ChangeEvent,
   FormEvent,
@@ -13,8 +14,8 @@ type Product = {
   id: number;
   slug: string;
   article: string;
-  category: "budget" | "standard" | "premium" | "turkey";
-  base: "felt" | "jute" | "woven";
+  category: string;
+  base: string;
   collection: string;
   name: string;
   description: string;
@@ -27,6 +28,10 @@ type Product = {
   featured: boolean;
   new: boolean;
 };
+
+type CatalogCategory = { value: string; label: string; active: boolean };
+type CatalogBase = { value: string; label: string; category: string; active: boolean };
+type CatalogSettings = { categories: CatalogCategory[]; bases: CatalogBase[] };
 
 const inputStyle = {
   width: "100%",
@@ -48,12 +53,145 @@ const buttonStyle = {
   cursor: "pointer",
 };
 
+const adminCardStyle = {
+  display: "flex",
+  gap: "13px",
+  alignItems: "center",
+  minHeight: "92px",
+  padding: "16px",
+  borderRadius: "18px",
+  border: "1px solid #e3dbcf",
+  background: "#ffffff",
+  color: "#171717",
+  textDecoration: "none",
+  boxShadow: "0 8px 24px rgba(41, 31, 18, 0.04)",
+} as const;
+
+const adminIconStyle = {
+  width: "44px",
+  height: "44px",
+  display: "grid",
+  placeItems: "center",
+  flexShrink: 0,
+  borderRadius: "13px",
+  background: "#f1e3c8",
+  fontSize: "22px",
+} as const;
+
+const adminTitleStyle = {
+  display: "block",
+  fontSize: "16px",
+  lineHeight: 1.2,
+} as const;
+
+const adminTextStyle = {
+  display: "block",
+  marginTop: "5px",
+  color: "#777067",
+  fontSize: "12px",
+  lineHeight: 1.35,
+} as const;
+
+const collectionPrefixes: Record<string, string> = {
+  marble: "MB",
+  luna: "LN",
+  gold: "GD",
+  flex: "FX",
+  anny: "AN",
+  mira: "MR",
+  itea: "IT",
+  orhidea: "OR",
+  latex: "LX",
+  espreco: "ES",
+  kamino: "KM",
+  darnichanka: "DR",
+  fashion: "FS",
+  lotos: "LT",
+  rubin: "RB",
+  "lotos p": "LP",
+  "lotos p.": "LP",
+};
+
+function normalizeCollectionName(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function createFallbackPrefix(collection: string) {
+  const normalized = collection
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-ZА-ЯІЇЄҐ0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!normalized) {
+    return "DC";
+  }
+
+  const words = normalized.split(" ").filter(Boolean);
+
+  if (words.length >= 2) {
+    return `${words[0][0] ?? "D"}${words[1][0] ?? "C"}`;
+  }
+
+  const word = words[0] ?? "DC";
+
+  return (word.slice(0, 2) || "DC").padEnd(2, "C");
+}
+
+function getCollectionPrefix(collection: string) {
+  const normalized = normalizeCollectionName(collection);
+
+  return (
+    collectionPrefixes[normalized] ||
+    createFallbackPrefix(collection)
+  );
+}
+
+function createNextArticleForCollection(
+  products: Product[],
+  collection: string
+) {
+  const prefix = getCollectionPrefix(collection);
+
+  const maxNumber = products.reduce((max, product) => {
+    const sameCollection =
+      normalizeCollectionName(product.collection ?? "") ===
+      normalizeCollectionName(collection);
+
+    if (!sameCollection) {
+      return max;
+    }
+
+    const match = String(product.article ?? "").match(
+      new RegExp(`^${prefix}-(\\d+)$`, "i")
+    );
+
+    const number = match ? Number(match[1]) : 0;
+
+    return Number.isFinite(number)
+      ? Math.max(max, number)
+      : max;
+  }, 0);
+
+  return `${prefix}-${String(maxNumber + 1).padStart(3, "0")}`;
+}
+
 export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [editingProduct, setEditingProduct] =
     useState<Product | null>(null);
+
+  const [collectionValue, setCollectionValue] =
+    useState("");
+  const [catalogSettings, setCatalogSettings] = useState<CatalogSettings>({ categories: [], bases: [] });
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedBase, setSelectedBase] = useState("");
 
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +227,40 @@ export default function AdminPage() {
     void loadProducts();
   }, [loadProducts]);
 
+  useEffect(() => {
+    async function loadCatalogSettings() {
+      try {
+        const response = await fetch("/api/catalog-settings", { cache: "no-store" });
+        if (!response.ok) throw new Error("Не вдалося завантажити категорії та основи");
+        const data = (await response.json()) as CatalogSettings;
+        setCatalogSettings({
+          categories: Array.isArray(data.categories) ? data.categories : [],
+          bases: Array.isArray(data.bases) ? data.bases : [],
+        });
+        const first = data.categories?.find((item) => item.active)?.value ?? "";
+        setSelectedCategory((current) => current || first);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Помилка завантаження категорій");
+      }
+    }
+    void loadCatalogSettings();
+  }, []);
+
+  const activeCategories = catalogSettings.categories.filter((item) => item.active);
+  const availableBases = catalogSettings.bases.filter(
+    (item) => item.active && item.category === selectedCategory
+  );
+
+  useEffect(() => {
+    if (!selectedCategory) {
+      setSelectedBase("");
+      return;
+    }
+    if (!availableBases.some((item) => item.value === selectedBase)) {
+      setSelectedBase(availableBases[0]?.value ?? "");
+    }
+  }, [selectedCategory, selectedBase, catalogSettings.bases]);
+
   function handleImages(
     event: ChangeEvent<HTMLInputElement>
   ) {
@@ -105,6 +277,9 @@ export default function AdminPage() {
 
   function startEditing(product: Product) {
     setEditingProduct(product);
+    setCollectionValue(product.collection ?? "");
+    setSelectedCategory(product.category ?? "");
+    setSelectedBase(product.base ?? "");
     setExistingImages(product.images ?? []);
     setSelectedImages([]);
     setMessage("");
@@ -117,6 +292,7 @@ export default function AdminPage() {
 
   function cancelEditing(form?: HTMLFormElement) {
     setEditingProduct(null);
+    setCollectionValue("");
     setExistingImages([]);
     setSelectedImages([]);
     setMessage("");
@@ -176,6 +352,7 @@ export default function AdminPage() {
       );
 
       setEditingProduct(null);
+      setCollectionValue("");
       setExistingImages([]);
       setSelectedImages([]);
       form.reset();
@@ -226,6 +403,7 @@ export default function AdminPage() {
 
       if (editingProduct?.id === product.id) {
         setEditingProduct(null);
+        setCollectionValue("");
         setExistingImages([]);
         setSelectedImages([]);
       }
@@ -240,6 +418,28 @@ export default function AdminPage() {
       );
     }
   }
+
+  const inStockCount = products.filter(
+    (product) => product.inStock
+  ).length;
+
+  const featuredCount = products.filter(
+    (product) => product.featured
+  ).length;
+
+  const newCount = products.filter(
+    (product) => product.new
+  ).length;
+
+  const categoryCount = new Set(
+    products.map((product) => product.category)
+  ).size;
+
+  const nextArticle =
+    createNextArticleForCollection(
+      products,
+      collectionValue
+    );
 
   return (
     <main
@@ -257,6 +457,250 @@ export default function AdminPage() {
         }}
       >
         <section
+          style={{
+            marginBottom: "28px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "20px",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              marginBottom: "20px",
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  margin: "0 0 6px",
+                  color: "#9a7b4f",
+                  fontSize: "13px",
+                  fontWeight: 900,
+                  letterSpacing: "1.4px",
+                  textTransform: "uppercase",
+                }}
+              >
+                DreamCarpet
+              </p>
+
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "clamp(32px, 5vw, 48px)",
+                  lineHeight: 1,
+                }}
+              >
+                Панель керування
+              </h1>
+
+              <p
+                style={{
+                  margin: "12px 0 0",
+                  maxWidth: "760px",
+                  color: "#68625b",
+                  lineHeight: 1.6,
+                }}
+              >
+                Товари, замовлення, клієнти, відгуки та основні
+                інструменти магазину в одному місці.
+              </p>
+            </div>
+
+            <Link
+              href="/"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                minHeight: "44px",
+                padding: "0 16px",
+                borderRadius: "12px",
+                background: "#181714",
+                color: "#ffffff",
+                textDecoration: "none",
+                fontWeight: 800,
+              }}
+            >
+              Перейти на сайт ↗
+            </Link>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(210px, 1fr))",
+              gap: "12px",
+              marginBottom: "16px",
+            }}
+          >
+            {[
+              {
+                label: "Усі товари",
+                value: products.length,
+                note: "у каталозі",
+              },
+              {
+                label: "У наявності",
+                value: inStockCount,
+                note: "можна замовити",
+              },
+              {
+                label: "Рекомендовані",
+                value: featuredCount,
+                note: "featured",
+              },
+              {
+                label: "Новинки",
+                value: newCount,
+                note: "позначені як new",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                style={{
+                  padding: "18px",
+                  borderRadius: "18px",
+                  background: "#ffffff",
+                  border: "1px solid #e7e1d8",
+                }}
+              >
+                <div
+                  style={{
+                    color: "#777067",
+                    fontSize: "13px",
+                    fontWeight: 800,
+                  }}
+                >
+                  {item.label}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "5px",
+                    fontSize: "30px",
+                    fontWeight: 900,
+                  }}
+                >
+                  {item.value}
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "2px",
+                    color: "#9b958d",
+                    fontSize: "12px",
+                  }}
+                >
+                  {item.note}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <a href="#add-product" style={adminCardStyle}>
+              <span style={adminIconStyle}>➕</span>
+              <span>
+                <strong style={adminTitleStyle}>Додати товар</strong>
+                <small style={adminTextStyle}>
+                  Створити нову позицію каталогу
+                </small>
+              </span>
+            </a>
+
+            <a href="#products" style={adminCardStyle}>
+              <span style={adminIconStyle}>🧶</span>
+              <span>
+                <strong style={adminTitleStyle}>Товари</strong>
+                <small style={adminTextStyle}>
+                  Редагування, ціна, фото, наявність
+                </small>
+              </span>
+            </a>
+
+            <Link href="/admin/orders" style={adminCardStyle}>
+              <span style={adminIconStyle}>📦</span>
+              <span>
+                <strong style={adminTitleStyle}>Замовлення</strong>
+                <small style={adminTextStyle}>
+                  Статуси, деталі та друк
+                </small>
+              </span>
+            </Link>
+
+            <Link href="/admin/reviews" style={adminCardStyle}>
+              <span style={adminIconStyle}>⭐</span>
+              <span>
+                <strong style={adminTitleStyle}>Відгуки</strong>
+                <small style={adminTextStyle}>
+                  Перевірка та модерація
+                </small>
+              </span>
+            </Link>
+
+            <Link href="/admin/customers" style={adminCardStyle}>
+              <span style={adminIconStyle}>👥</span>
+              <span>
+                <strong style={adminTitleStyle}>Клієнти</strong>
+                <small style={adminTextStyle}>
+                  Контакти та історія замовлень
+                </small>
+              </span>
+            </Link>
+
+          <Link href="/admin/categories" style={adminCardStyle}>
+              <span style={adminIconStyle}>🗂️</span>
+              <span>
+                <strong style={adminTitleStyle}>Категорії</strong>
+                <small style={adminTextStyle}>
+                  Зараз використовується {categoryCount} категорії
+                </small>
+              </span>
+            </Link>
+
+            <Link href="/care" style={adminCardStyle}>
+              <span style={adminIconStyle}>📝</span>
+              <span>
+                <strong style={adminTitleStyle}>Статті / догляд</strong>
+                <small style={adminTextStyle}>
+                  Перегляд SEO-статей магазину
+                </small>
+              </span>
+            </Link>
+
+            <Link href="/sitemap.xml" style={adminCardStyle}>
+              <span style={adminIconStyle}>🔎</span>
+              <span>
+                <strong style={adminTitleStyle}>SEO</strong>
+                <small style={adminTextStyle}>
+                  Sitemap та індексація
+                </small>
+              </span>
+            </Link>
+
+            <Link href="/room-tryon" style={adminCardStyle}>
+              <span style={adminIconStyle}>🤖</span>
+              <span>
+                <strong style={adminTitleStyle}>AI-примірка</strong>
+                <small style={adminTextStyle}>
+                  Перевірка модуля примірки
+                </small>
+              </span>
+            </Link>
+          </div>
+        </section>
+
+        <section
+          id="add-product"
           style={{
             background: "#ffffff",
             padding: "30px",
@@ -314,26 +758,77 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label>Артикул</label>
+              <label>
+                Артикул{" "}
+                {!editingProduct && (
+                  <span
+                    style={{
+                      color: "#8a7656",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    (створюється автоматично)
+                  </span>
+                )}
+              </label>
+
               <input
+                key={`article-${editingProduct?.id ?? "new"}-${nextArticle}`}
                 name="article"
                 required
-                defaultValue={editingProduct?.article ?? ""}
-                placeholder="MB-001"
-                style={inputStyle}
+                readOnly={!editingProduct}
+                defaultValue={
+                  editingProduct?.article ??
+                  (collectionValue.trim() ? nextArticle : "")
+                }
+                placeholder="Спочатку введіть колекцію"
+                style={{
+                  ...inputStyle,
+                  background: editingProduct
+                    ? "#ffffff"
+                    : "#f4efe6",
+                  fontWeight: 800,
+                }}
               />
+
+              {!editingProduct && (
+                <p
+                  style={{
+                    margin: "7px 0 0",
+                    color: "#777067",
+                    fontSize: "12px",
+                  }}
+                >
+                  Введіть колекцію — артикул підставиться автоматично.
+                </p>
+              )}
             </div>
 
             <div>
               <label>Колекція</label>
               <input
                 name="collection"
-                defaultValue={
-                  editingProduct?.collection ?? ""
+                value={collectionValue}
+                onChange={(event) =>
+                  setCollectionValue(event.target.value)
                 }
                 placeholder="Marble"
                 style={inputStyle}
               />
+
+              {!editingProduct && collectionValue.trim() && (
+                <p
+                  style={{
+                    margin: "7px 0 0",
+                    color: "#777067",
+                    fontSize: "12px",
+                  }}
+                >
+                  Для цієї колекції буде артикул:{" "}
+                  <strong>{nextArticle}</strong>
+                </p>
+              )}
             </div>
 
             <div>
@@ -354,17 +849,20 @@ export default function AdminPage() {
               <label>Категорія</label>
               <select
                 name="category"
-                defaultValue={
-                  editingProduct?.category ?? "budget"
-                }
+                required
+                value={selectedCategory}
+                onChange={(event) => {
+                  setSelectedCategory(event.target.value);
+                  setSelectedBase("");
+                }}
                 style={inputStyle}
               >
-                <option value="budget">Бюджетні</option>
-                <option value="standard">
-                  Середня якість
-                </option>
-                <option value="premium">Преміум</option>
-                <option value="turkey">Туреччина</option>
+                <option value="">Оберіть категорію</option>
+                {activeCategories.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -372,17 +870,29 @@ export default function AdminPage() {
               <label>Основа</label>
               <select
                 name="base"
-                defaultValue={
-                  editingProduct?.base ?? "felt"
-                }
-                style={inputStyle}
+                required
+                value={selectedBase}
+                onChange={(event) => setSelectedBase(event.target.value)}
+                disabled={!selectedCategory}
+                style={{
+                  ...inputStyle,
+                  background: !selectedCategory ? "#eeeeee" : "#ffffff",
+                }}
               >
-              <option value="felt">Повстяна</option>
-<option value="jute">Джутова</option>
-<option value="latex">Латексна</option>
-<option value="stitched">Прошита</option>
-<option value="woven">Ткана</option>
+                <option value="">
+                  {selectedCategory ? "Оберіть основу" : "Спочатку оберіть категорію"}
+                </option>
+                {availableBases.map((base) => (
+                  <option key={`${base.category}-${base.value}`} value={base.value}>
+                    {base.label}
+                  </option>
+                ))}
               </select>
+              {selectedCategory && availableBases.length === 0 && (
+                <p style={{ margin: "7px 0 0", color: "#b42323", fontSize: "12px", fontWeight: 700 }}>
+                  Для цієї категорії немає активних основ. Додайте їх у розділі «Категорії».
+                </p>
+              )}
             </div>
 
             <div>
@@ -628,6 +1138,7 @@ export default function AdminPage() {
         </section>
 
         <section
+          id="products"
           style={{
             background: "#ffffff",
             padding: "30px",

@@ -1,45 +1,87 @@
 import Image from "next/image";
 import Link from "next/link";
+import fs from "fs/promises";
+import path from "path";
+
 import { getAllProducts } from "../../lib/getAllProducts";
 
 export const dynamic = "force-dynamic";
 
-const categories = [
-  {
-    key: "budget",
-    title: "Бюджетні",
-    description:
-      "Практичні та доступні килими для кухні, коридору й інших кімнат.",
-  },
-  {
-    key: "standard",
-    title: "Середня якість",
-    description:
-      "Надійні килими з хорошою щільністю та приємним ворсом.",
-  },
-  {
-    key: "premium",
-    title: "Преміум",
-    description:
-      "Стильні килими підвищеної якості для сучасного інтер’єру.",
-  },
-  {
-    key: "turkey",
-    title: "Преміум Туреччина",
-    description:
-      "Якісні турецькі килими з виразним дизайном і щільним ворсом.",
-  },
-];
+type CatalogSettingItem = {
+  value: string;
+  label: string;
+  active: boolean;
+};
+
+type CatalogSettings = {
+  categories: CatalogSettingItem[];
+  bases: CatalogSettingItem[];
+};
+
+const settingsFile = path.join(
+  process.cwd(),
+  "database",
+  "catalog-settings.json"
+);
+
+const categoryDescriptions: Record<string, string> = {
+  budget:
+    "Практичні та доступні килими для кухні, коридору й інших кімнат.",
+
+  standard:
+    "Надійні килими з хорошою щільністю та приємним ворсом.",
+
+  premium:
+    "Стильні килими підвищеної якості для сучасного інтер’єру.",
+
+  turkey:
+    "Якісні турецькі килими з виразним дизайном і щільним ворсом.",
+};
+
+async function getCatalogSettings(): Promise<CatalogSettings> {
+  try {
+    const content = await fs.readFile(
+      settingsFile,
+      "utf8"
+    );
+
+    const parsed = JSON.parse(
+      content
+    ) as CatalogSettings;
+
+    return {
+      categories: Array.isArray(parsed.categories)
+        ? parsed.categories
+        : [],
+
+      bases: Array.isArray(parsed.bases)
+        ? parsed.bases
+        : [],
+    };
+  } catch {
+    return {
+      categories: [],
+      bases: [],
+    };
+  }
+}
 
 export default async function CatalogPage() {
   const products = await getAllProducts();
+  const settings = await getCatalogSettings();
+
+  const categories = settings.categories.filter(
+    (category) => category.active
+  );
 
   return (
     <main className="catalog-page">
       <div className="catalog-container">
         <nav className="breadcrumbs">
           <Link href="/">Головна</Link>
+
           <span>/</span>
+
           <strong>Каталог</strong>
         </nav>
 
@@ -51,89 +93,112 @@ export default async function CatalogPage() {
           <h1>Оберіть категорію</h1>
 
           <p className="subtitle">
-            Перейдіть до потрібного розділу, щоб переглянути доступні килими та
-            доріжки.
+            Перейдіть до потрібного розділу,
+            щоб переглянути доступні килими
+            та доріжки.
           </p>
         </header>
 
-        <section className="categories-grid">
-          {categories.map((category, index) => {
-            const categoryProducts =
-              products.filter(
-                (product) =>
-                  product.category ===
-                  category.key
-              );
+        {categories.length === 0 ? (
+          <div className="empty-categories">
+            Активних категорій поки немає.
+          </div>
+        ) : (
+          <section className="categories-grid">
+            {categories.map(
+              (category, index) => {
+                const categoryProducts =
+                  products.filter(
+                    (product) =>
+                      String(
+                        product.category
+                      ) === category.value
+                  );
 
-            const categoryImage =
-              categoryProducts.find(
-                (product) =>
-                  Array.isArray(
-                    product.images
-                  ) &&
-                  product.images.length > 0
-              )?.images?.[0] || null;
+                const categoryImage =
+                  categoryProducts.find(
+                    (product) =>
+                      Array.isArray(
+                        product.images
+                      ) &&
+                      product.images.length >
+                        0
+                  )?.images?.[0] ?? null;
 
-            return (
-              <Link
-           href={`/catalog/category/${category.key}`}
-                className="category-card"
-                key={category.key}
-              >
-                <div className="category-image">
-                  {categoryImage ? (
-                    <Image
-                      src={categoryImage}
-                      alt={category.title}
-                      fill
-                      priority={index < 2}
-                      sizes="(max-width: 700px) 100vw, 50vw"
-                      style={{
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <div className="placeholder">
-                      <span>
-                        DreamCarpet
-                      </span>
+                const description =
+                  categoryDescriptions[
+                    category.value
+                  ] ??
+                  `Перегляньте товари категорії «${category.label}» у каталозі DreamCarpet.`;
+
+                return (
+                  <Link
+                    href={`/catalog/category/${category.value}`}
+                    className="category-card"
+                    key={category.value}
+                  >
+                    <div className="category-image">
+                      {categoryImage ? (
+                        <Image
+                          src={categoryImage}
+                          alt={
+                            category.label
+                          }
+                          fill
+                          priority={index < 2}
+                          sizes="(max-width: 700px) 100vw, 50vw"
+                          style={{
+                            objectFit:
+                              "cover",
+                          }}
+                        />
+                      ) : (
+                        <div className="placeholder">
+                          <span>
+                            DreamCarpet
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="overlay" />
+
+                      <div className="category-number">
+                        {String(
+                          index + 1
+                        ).padStart(2, "0")}
+                      </div>
+
+                      <div className="category-content">
+                        <span className="products-count">
+                          Товарів:{" "}
+                          {
+                            categoryProducts.length
+                          }
+                        </span>
+
+                        <h2>
+                          {
+                            category.label
+                          }
+                        </h2>
+
+                        <p>
+                          {description}
+                        </p>
+
+                        <div className="open-button">
+                          Переглянути
+                          товари
+                          <span>→</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
-
-                  <div className="overlay" />
-
-                  <div className="category-number">
-                    0{index + 1}
-                  </div>
-
-                  <div className="category-content">
-                    <span className="products-count">
-                      Товарів:{" "}
-                      {
-                        categoryProducts.length
-                      }
-                    </span>
-
-                    <h2>
-                      {category.title}
-                    </h2>
-
-                    <p>
-                      {
-                        category.description
-                      }
-                    </p>
-
-                    <div className="open-button">
-                      Переглянути товари
-                      <span>→</span>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </section>
+                  </Link>
+                );
+              }
+            )}
+          </section>
+        )}
       </div>
 
       <style>{`
@@ -198,10 +263,21 @@ export default async function CatalogPage() {
           line-height: 1.6;
         }
 
+        .empty-categories {
+          padding: 30px;
+          border-radius: 20px;
+          background: #ffffff;
+          border: 1px solid #e2ddd4;
+          font-weight: 700;
+        }
+
         .categories-grid {
           display: grid;
           grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+              2,
+              minmax(0, 1fr)
+            );
           gap: 24px;
         }
 
@@ -212,8 +288,14 @@ export default async function CatalogPage() {
           background: #d8d1c7;
           color: #ffffff;
           text-decoration: none;
-          box-shadow: 0 18px 45px
-            rgba(37, 30, 21, 0.12);
+          box-shadow:
+            0 18px 45px
+            rgba(
+              37,
+              30,
+              21,
+              0.12
+            );
         }
 
         .category-image {
@@ -224,35 +306,43 @@ export default async function CatalogPage() {
           overflow: hidden;
         }
 
-      .category-image img {
-  transition: transform 0.6s ease;
-}
+        .category-image img {
+          transition:
+            transform
+            0.6s ease;
+        }
 
         .category-card:hover
-  .category-image
-  img {
-  transform: scale(1.06);
-}
+          .category-image
+          img {
+          transform:
+            scale(1.06);
+        }
 
         .placeholder {
           position: absolute;
           inset: 0;
           display: grid;
           place-items: center;
-          background: linear-gradient(
-            135deg,
-            #a99578,
-            #55493b
-          );
+
+          background:
+            linear-gradient(
+              135deg,
+              #a99578,
+              #55493b
+            );
         }
 
         .placeholder span {
           opacity: 0.3;
-          font-size: clamp(
-            28px,
-            5vw,
-            55px
-          );
+
+          font-size:
+            clamp(
+              28px,
+              5vw,
+              55px
+            );
+
           font-weight: 900;
           letter-spacing: 4px;
         }
@@ -260,15 +350,32 @@ export default async function CatalogPage() {
         .overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            to top,
-            rgba(14, 13, 11, 0.92)
-              0%,
-            rgba(14, 13, 11, 0.4)
-              58%,
-            rgba(14, 13, 11, 0.1)
-              100%
-          );
+
+          background:
+            linear-gradient(
+              to top,
+              rgba(
+                14,
+                13,
+                11,
+                0.92
+              )
+                0%,
+              rgba(
+                14,
+                13,
+                11,
+                0.4
+              )
+                58%,
+              rgba(
+                14,
+                13,
+                11,
+                0.1
+              )
+                100%
+            );
         }
 
         .category-number {
@@ -276,12 +383,15 @@ export default async function CatalogPage() {
           top: 24px;
           right: 26px;
           z-index: 2;
-          color: rgba(
-            255,
-            255,
-            255,
-            0.7
-          );
+
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.7
+            );
+
           font-size: 20px;
           font-weight: 900;
         }
@@ -298,67 +408,92 @@ export default async function CatalogPage() {
         .products-count {
           display: inline-flex;
           margin-bottom: 14px;
-          border: 1px solid
+
+          border:
+            1px solid
             rgba(
               255,
               255,
               255,
               0.35
             );
+
           border-radius: 999px;
           padding: 7px 11px;
-          background: rgba(
-            0,
-            0,
-            0,
-            0.25
-          );
+
+          background:
+            rgba(
+              0,
+              0,
+              0,
+              0.25
+            );
+
           font-size: 12px;
           font-weight: 800;
-          backdrop-filter: blur(8px);
+
+          backdrop-filter:
+            blur(8px);
         }
 
         .category-content h2 {
           margin: 0 0 12px;
-          font-size: clamp(
-            28px,
-            4vw,
-            42px
-          );
+
+          font-size:
+            clamp(
+              28px,
+              4vw,
+              42px
+            );
         }
 
         .category-content p {
           max-width: 530px;
           margin: 0 0 22px;
-          color: rgba(
-            255,
-            255,
-            255,
-            0.82
-          );
+
+          color:
+            rgba(
+              255,
+              255,
+              255,
+              0.82
+            );
+
           line-height: 1.55;
         }
 
         .open-button {
           display: flex;
           align-items: center;
-          justify-content: space-between;
+          justify-content:
+            space-between;
+
           gap: 15px;
+
           max-width: 230px;
+
           border-radius: 12px;
           padding: 13px 16px;
+
           background: #ffffff;
           color: #181714;
+
           font-weight: 900;
+
           transition:
-            transform 0.2s ease,
-            background 0.2s ease;
+            transform
+              0.2s ease,
+            background
+              0.2s ease;
         }
 
         .category-card:hover
           .open-button {
-          transform: translateY(-2px);
-          background: #e8dac5;
+          transform:
+            translateY(-2px);
+
+          background:
+            #e8dac5;
         }
 
         .open-button span {
@@ -369,7 +504,8 @@ export default async function CatalogPage() {
           max-width: 850px
         ) {
           .categories-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns:
+              1fr;
           }
 
           .category-card,
@@ -382,17 +518,23 @@ export default async function CatalogPage() {
           max-width: 520px
         ) {
           .catalog-page {
-            padding: 20px 14px 50px;
+            padding:
+              20px
+              14px
+              50px;
           }
 
           .catalog-header {
-            margin-bottom: 28px;
+            margin-bottom:
+              28px;
           }
 
           .category-card,
           .category-image {
             min-height: 380px;
-            border-radius: 20px;
+
+            border-radius:
+              20px;
           }
 
           .category-content {

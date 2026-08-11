@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import fs from "fs/promises";
+import path from "path";
 
 import CategoryProductsClient from "./CategoryProductsClient";
 import { getAllProducts } from "../../../../lib/getAllProducts";
@@ -11,6 +13,52 @@ export const dynamic = "force-dynamic";
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
   "http://localhost:3000";
+
+type CatalogCategory = {
+  value: string;
+  label: string;
+  active: boolean;
+};
+
+type CatalogBase = {
+  value: string;
+  label: string;
+  category: string;
+  active: boolean;
+};
+
+type CatalogSettings = {
+  categories: CatalogCategory[];
+  bases: CatalogBase[];
+};
+
+const settingsFile = path.join(
+  process.cwd(),
+  "database",
+  "catalog-settings.json"
+);
+
+async function getCatalogSettings(): Promise<CatalogSettings> {
+  try {
+    const content = await fs.readFile(settingsFile, "utf8");
+    const data = JSON.parse(content) as CatalogSettings;
+
+    return {
+      categories: Array.isArray(data.categories) ? data.categories : [],
+      bases: Array.isArray(data.bases) ? data.bases : [],
+    };
+  } catch {
+    return { categories: [], bases: [] };
+  }
+}
+
+const baseImages: Record<string, string> = {
+  felt: "/images/subcategories/felt.jpg.png",
+  woven: "/images/subcategories/woven.jpg.png",
+  latex: "/images/subcategories/latex.jpg.png",
+  jute: "/images/subcategories/jute.jpg.png",
+  stitched: "/images/subcategories/darnychanka.jpg.png",
+};
 
 const categoryInformation: Record<
   string,
@@ -196,9 +244,12 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
 
-  const categoryData = categoryInformation[category];
+  const settings = await getCatalogSettings();
+  const configuredCategory = settings.categories.find(
+    (item) => item.value === category && item.active
+  );
 
-  if (!categoryData) {
+  if (!configuredCategory) {
     return {
       title: "Категорію не знайдено | DreamCarpet",
       description:
@@ -206,6 +257,15 @@ export async function generateMetadata({
     };
   }
 
+  const fallback = {
+    title: configuredCategory.label,
+    description: `Оберіть потрібну основу в категорії «${configuredCategory.label}».`,
+    seoTitle: `${configuredCategory.label} — купити килими | DreamCarpet`,
+    seoDescription: `Килими та доріжки категорії «${configuredCategory.label}» у DreamCarpet. Оберіть потрібну основу та перегляньте товари.`,
+    keywords: [configuredCategory.label, "килими", "доріжки", "DreamCarpet"],
+  };
+
+  const categoryData = categoryInformation[category] ?? fallback;
   const canonicalUrl = getCategoryUrl(category);
 
   return {
@@ -229,11 +289,25 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const { category } = await params;
 
-  const categoryData = categoryInformation[category];
+  const settings = await getCatalogSettings();
 
-  if (!categoryData) {
+  const configuredCategory = settings.categories.find(
+    (item) => item.value === category && item.active
+  );
+
+  if (!configuredCategory) {
     notFound();
   }
+
+  const fallback = {
+    title: configuredCategory.label,
+    description: `Оберіть потрібну основу в категорії «${configuredCategory.label}».`,
+    seoTitle: `${configuredCategory.label} — купити килими | DreamCarpet`,
+    seoDescription: `Килими та доріжки категорії «${configuredCategory.label}» у DreamCarpet.`,
+    keywords: [configuredCategory.label, "килими", "доріжки", "DreamCarpet"],
+  };
+
+  const categoryData = categoryInformation[category] ?? fallback;
 
   const products = await getAllProducts();
 
@@ -253,7 +327,13 @@ export default async function CategoryPage({
     categoryProducts.length
   );
 
-  if (category === "budget") {
+  const categoryBases = settings.bases.filter(
+    (base) =>
+      base.active &&
+      base.category === category
+  );
+
+  if (categoryBases.length > 0) {
     return (
       <>
         <script
@@ -284,11 +364,7 @@ export default async function CategoryPage({
               margin: "0 auto",
             }}
           >
-            <div
-              style={{
-                marginBottom: "32px",
-              }}
-            >
+            <div style={{ marginBottom: "32px" }}>
               <p
                 style={{
                   margin: "0 0 8px",
@@ -304,7 +380,7 @@ export default async function CategoryPage({
 
               <h1
                 style={{
-                  margin: "0",
+                  margin: 0,
                   color: "#181714",
                   fontSize: "clamp(32px, 5vw, 52px)",
                 }}
@@ -331,74 +407,105 @@ export default async function CategoryPage({
                 gap: "18px",
               }}
             >
-              {budgetSubcategories.map((subcategory) => (
-                <Link
-                  key={subcategory.slug}
-                  href={`/catalog/category/budget/${subcategory.slug}`}
-                  style={{
-                    display: "block",
-                    minHeight: "420px",
-                    padding: "25px",
-                    border: "1px solid #ded7ca",
-                    borderRadius: "18px",
-                    background: "#ffffff",
-                    color: "#181714",
-                    textDecoration: "none",
-                    boxShadow:
-                      "0 10px 30px rgba(44, 36, 24, 0.07)",
-                  }}
-                >
-                  <div
+              {categoryBases.map((base) => {
+                const baseProducts = categoryProducts.filter(
+                  (product) => product.base === base.value
+                );
+
+                const productImage =
+                  baseProducts.find(
+                    (product) =>
+                      Array.isArray(product.images) &&
+                      product.images.length > 0
+                  )?.images?.[0];
+
+                const image =
+                  productImage ||
+                  baseImages[base.value] ||
+                  null;
+
+                return (
+                  <Link
+                    key={`${base.category}-${base.value}`}
+                    href={`/catalog/category/${category}/${base.value}`}
                     style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "220px",
-                      marginBottom: "18px",
-                      overflow: "hidden",
-                      borderRadius: "14px",
-                      background: "#eeeae2",
+                      display: "block",
+                      minHeight: "420px",
+                      padding: "25px",
+                      border: "1px solid #ded7ca",
+                      borderRadius: "18px",
+                      background: "#ffffff",
+                      color: "#181714",
+                      textDecoration: "none",
+                      boxShadow:
+                        "0 10px 30px rgba(44, 36, 24, 0.07)",
                     }}
                   >
-                    <Image
-                      src={subcategory.image}
-                      alt={subcategory.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
+                    <div
                       style={{
-                        objectFit: "cover",
+                        position: "relative",
+                        width: "100%",
+                        height: "220px",
+                        marginBottom: "18px",
+                        overflow: "hidden",
+                        borderRadius: "14px",
+                        background: "#eeeae2",
                       }}
-                    />
-                  </div>
+                    >
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={base.label}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                          style={{ objectFit: "cover" }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "grid",
+                            placeItems: "center",
+                            color: "#8a7656",
+                            fontWeight: 900,
+                          }}
+                        >
+                          DreamCarpet
+                        </div>
+                      )}
+                    </div>
 
-                  <h2
-                    style={{
-                      margin: "0 0 10px",
-                      fontSize: "22px",
-                    }}
-                  >
-                    {subcategory.title}
-                  </h2>
+                    <h2
+                      style={{
+                        margin: "0 0 10px",
+                        fontSize: "22px",
+                      }}
+                    >
+                      {base.label}
+                    </h2>
 
-                  <p
-                    style={{
-                      margin: "0",
-                      color: "#716d65",
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {subcategory.description}
-                  </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#716d65",
+                        lineHeight: 1.6,
+                      }}
+                    >
+                      Товарів: {baseProducts.length}
+                    </p>
 
-                  <div
-                    style={{
-                      marginTop: "20px",
-                      fontWeight: 800,
-                    }}
-                  >
-                    Переглянути товари →
-                  </div>
-                </Link>
-              ))}
+                    <div
+                      style={{
+                        marginTop: "20px",
+                        fontWeight: 800,
+                      }}
+                    >
+                      Переглянути товари →
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         </main>

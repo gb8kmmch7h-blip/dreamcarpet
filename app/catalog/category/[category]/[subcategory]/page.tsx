@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import fs from "fs/promises";
+import path from "path";
 
-import CategoryProductsClient from "../../[category]/CategoryProductsClient";
+import CategoryProductsClient from "../CategoryProductsClient";
 import { getAllProducts } from "../../../../../lib/getAllProducts";
-import type { ProductBase } from "../../../../../types/product";
 
 export const dynamic = "force-dynamic";
 
@@ -11,127 +12,134 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
   "http://localhost:3000";
 
-const subcategoryInformation: Record<
-  string,
-  {
-    title: string;
-    description: string;
-    seoTitle: string;
-    seoDescription: string;
-    keywords: string[];
-  }
-> = {
-  felt: {
-    title: "Бюджетні на повстяній основі",
-    description:
-      "Практичні та доступні килими й доріжки на повстяній основі.",
-    seoTitle:
-      "Килими та доріжки на повстяній основі купити | DreamCarpet",
-    seoDescription:
-      "Бюджетні килими та килимові доріжки на повстяній основі. Практичні моделі для коридору, кухні та дому за доступною ціною.",
-    keywords: [
-      "килим на повстяній основі",
-      "доріжка на повстяній основі",
-      "бюджетні доріжки",
-      "повстяна основа",
-      "килим купити",
-      "DreamCarpet",
-    ],
-  },
-
-  woven: {
-    title: "Бюджетні на тканій основі",
-    description:
-      "Міцні бюджетні килими й доріжки на тканій основі.",
-    seoTitle:
-      "Килими та доріжки на тканій основі купити | DreamCarpet",
-    seoDescription:
-      "Бюджетні килими та доріжки на тканій основі. Міцні, практичні та зручні для щоденного використання вдома.",
-    keywords: [
-      "килим на тканій основі",
-      "доріжка на тканій основі",
-      "ткана основа",
-      "бюджетні килими",
-      "килимова доріжка купити",
-      "DreamCarpet",
-    ],
-  },
-
-  latex: {
-    title: "Бюджетні на латексній основі",
-    description:
-      "Практичні доріжки на латексній основі, які добре тримаються на підлозі.",
-    seoTitle:
-      "Килими та доріжки на латексній основі купити | DreamCarpet",
-    seoDescription:
-      "Килими та доріжки на латексній основі для дому. Практичні моделі, які краще тримаються на підлозі та підходять для щоденного використання.",
-    keywords: [
-      "килим на латексній основі",
-      "доріжка на латексній основі",
-      "латексна основа",
-      "доріжка для коридору",
-      "килим купити",
-      "DreamCarpet",
-    ],
-  },
-
-  jute: {
-    title: "Бюджетні на джутовій основі",
-    description:
-      "Міцні бюджетні килими й доріжки на джутовій основі.",
-    seoTitle:
-      "Килими та доріжки на джутовій основі купити | DreamCarpet",
-    seoDescription:
-      "Бюджетні килими та доріжки на джутовій основі. Міцні моделі для дому, коридору, кухні та вітальні.",
-    keywords: [
-      "килим на джутовій основі",
-      "доріжка на джутовій основі",
-      "джутова основа",
-      "міцні доріжки",
-      "килимова доріжка",
-      "DreamCarpet",
-    ],
-  },
-
-  darnychanka: {
-    title: "Дарничанка",
-    description:
-      "Бюджетні килими й доріжки колекції Дарничанка.",
-    seoTitle:
-      "Доріжки Дарничанка купити | DreamCarpet",
-    seoDescription:
-      "Практичні бюджетні доріжки Дарничанка для коридору, кухні та дому. Прошиті моделі за доступною ціною.",
-    keywords: [
-      "Дарничанка",
-      "доріжки Дарничанка",
-      "килим Дарничанка",
-      "прошиті доріжки",
-      "бюджетні доріжки",
-      "DreamCarpet",
-    ],
-  },
+type CatalogCategory = {
+  value: string;
+  label: string;
+  active: boolean;
 };
 
-const subcategoryBaseMap: Record<string, ProductBase> = {
-  felt: "felt",
-  woven: "woven",
-  latex: "latex",
-  jute: "jute",
+type CatalogBase = {
+  value: string;
+  label: string;
+  category: string;
+  active: boolean;
+};
+
+type CatalogSettings = {
+  categories: CatalogCategory[];
+  bases: CatalogBase[];
 };
 
 type SubcategoryPageProps = {
   params: Promise<{
+    category: string;
     subcategory: string;
   }>;
 };
 
-function getSubcategoryUrl(subcategory: string) {
-  return `${siteUrl}/catalog/category/budget/${subcategory}`;
+const settingsFile = path.join(
+  process.cwd(),
+  "database",
+  "catalog-settings.json"
+);
+
+async function getCatalogSettings(): Promise<CatalogSettings> {
+  try {
+    const content = await fs.readFile(settingsFile, "utf8");
+    const data = JSON.parse(content) as CatalogSettings;
+
+    return {
+      categories: Array.isArray(data.categories)
+        ? data.categories
+        : [],
+      bases: Array.isArray(data.bases)
+        ? data.bases
+        : [],
+    };
+  } catch {
+    return {
+      categories: [],
+      bases: [],
+    };
+  }
+}
+
+const baseSeo: Record<
+  string,
+  {
+    name: string;
+    description: string;
+    keywords: string[];
+  }
+> = {
+  felt: {
+    name: "на повстяній основі",
+    description:
+      "Практичні килими та доріжки на повстяній основі для дому.",
+    keywords: [
+      "килим на повстяній основі",
+      "доріжка на повстяній основі",
+      "повстяна основа",
+    ],
+  },
+
+  woven: {
+    name: "на тканій основі",
+    description:
+      "Міцні килими та доріжки на тканій основі для щоденного використання.",
+    keywords: [
+      "килим на тканій основі",
+      "доріжка на тканій основі",
+      "ткана основа",
+    ],
+  },
+
+  latex: {
+    name: "на латексній основі",
+    description:
+      "Практичні килими та доріжки на латексній основі, які добре тримаються на підлозі.",
+    keywords: [
+      "килим на латексній основі",
+      "доріжка на латексній основі",
+      "латексна основа",
+    ],
+  },
+
+  jute: {
+    name: "на джутовій основі",
+    description:
+      "Міцні килими та доріжки на джутовій основі для різних кімнат.",
+    keywords: [
+      "килим на джутовій основі",
+      "доріжка на джутовій основі",
+      "джутова основа",
+    ],
+  },
+
+  stitched: {
+    name: "на прошитій основі",
+    description:
+      "Практичні прошиті килими та доріжки для дому та коридору.",
+    keywords: [
+      "прошиті доріжки",
+      "прошитий килим",
+      "прошита основа",
+    ],
+  },
+};
+
+function getSubcategoryUrl(
+  category: string,
+  subcategory: string
+) {
+  return `${siteUrl}/catalog/category/${category}/${subcategory}`;
 }
 
 function createBreadcrumbJsonLd(
+  category: string,
+  categoryLabel: string,
   subcategory: string,
-  title: string
+  subcategoryLabel: string
 ) {
   return {
     "@context": "https://schema.org",
@@ -152,20 +160,21 @@ function createBreadcrumbJsonLd(
       {
         "@type": "ListItem",
         position: 3,
-        name: "Бюджетні килими",
-        item: `${siteUrl}/catalog/category/budget`,
+        name: categoryLabel,
+        item: `${siteUrl}/catalog/category/${category}`,
       },
       {
         "@type": "ListItem",
         position: 4,
-        name: title,
-        item: getSubcategoryUrl(subcategory),
+        name: subcategoryLabel,
+        item: getSubcategoryUrl(category, subcategory),
       },
     ],
   };
 }
 
 function createCollectionJsonLd(
+  category: string,
   subcategory: string,
   title: string,
   description: string,
@@ -176,7 +185,7 @@ function createCollectionJsonLd(
     "@type": "CollectionPage",
     name: title,
     description,
-    url: getSubcategoryUrl(subcategory),
+    url: getSubcategoryUrl(category, subcategory),
     isPartOf: {
       "@type": "WebSite",
       name: "DreamCarpet",
@@ -192,31 +201,63 @@ function createCollectionJsonLd(
 export async function generateMetadata({
   params,
 }: SubcategoryPageProps): Promise<Metadata> {
-  const { subcategory } = await params;
+  const { category, subcategory } = await params;
 
-  const subcategoryData =
-    subcategoryInformation[subcategory];
+  const settings = await getCatalogSettings();
 
-  if (!subcategoryData) {
+  const categoryData = settings.categories.find(
+    (item) =>
+      item.value === category &&
+      item.active
+  );
+
+  const baseData = settings.bases.find(
+    (item) =>
+      item.value === subcategory &&
+      item.category === category &&
+      item.active
+  );
+
+  if (!categoryData || !baseData) {
     return {
-      title: "Підкатегорію не знайдено | DreamCarpet",
+      title: "Розділ не знайдено | DreamCarpet",
       description:
-        "На жаль, такої підкатегорії немає в каталозі DreamCarpet.",
+        "На жаль, такого розділу немає в каталозі DreamCarpet.",
     };
   }
 
-  const canonicalUrl = getSubcategoryUrl(subcategory);
+  const seo = baseSeo[subcategory];
+
+  const title = `${categoryData.label}: ${baseData.label} | DreamCarpet`;
+
+  const description =
+    seo?.description ??
+    `Килими та доріжки «${baseData.label}» у категорії «${categoryData.label}». Перегляньте доступні товари DreamCarpet.`;
+
+  const keywords = [
+    categoryData.label,
+    baseData.label,
+    "килим купити",
+    "килимова доріжка",
+    "DreamCarpet",
+    ...(seo?.keywords ?? []),
+  ];
+
+  const canonicalUrl = getSubcategoryUrl(
+    category,
+    subcategory
+  );
 
   return {
-    title: subcategoryData.seoTitle,
-    description: subcategoryData.seoDescription,
-    keywords: subcategoryData.keywords,
+    title,
+    description,
+    keywords,
     alternates: {
       canonical: canonicalUrl,
     },
     openGraph: {
-      title: subcategoryData.seoTitle,
-      description: subcategoryData.seoDescription,
+      title,
+      description,
       type: "website",
       url: canonicalUrl,
     },
@@ -226,81 +267,84 @@ export async function generateMetadata({
 export default async function SubcategoryPage({
   params,
 }: SubcategoryPageProps) {
-  const { subcategory } = await params;
+  const { category, subcategory } = await params;
 
-  const subcategoryData =
-    subcategoryInformation[subcategory];
+  const settings = await getCatalogSettings();
 
-  if (!subcategoryData) {
+  const categoryData = settings.categories.find(
+    (item) =>
+      item.value === category &&
+      item.active
+  );
+
+  const baseData = settings.bases.find(
+    (item) =>
+      item.value === subcategory &&
+      item.category === category &&
+      item.active
+  );
+
+  if (!categoryData || !baseData) {
     notFound();
   }
 
   const products = await getAllProducts();
 
   const categoryProducts = products.filter(
-    (product) => {
-      if (product.category !== "budget") {
-        return false;
-      }
-
-      const collection = product.collection
-        ? product.collection.trim().toLowerCase()
-        : "";
-
-      const isDarnychanka =
-        collection.includes("дарничанка") ||
-        collection.includes("darnychanka") ||
-        product.base === "stitched";
-
-      if (subcategory === "darnychanka") {
-        return isDarnychanka;
-      }
-
-      const neededBase =
-        subcategoryBaseMap[subcategory];
-
-      if (!neededBase) {
-        return false;
-      }
-
-      return (
-        product.base === neededBase &&
-        !isDarnychanka
-      );
-    }
+    (product) =>
+      String(product.category) === category &&
+      String(product.base) === subcategory
   );
 
-  const breadcrumbJsonLd = createBreadcrumbJsonLd(
-    subcategory,
-    subcategoryData.title
-  );
+  const seo = baseSeo[subcategory];
 
-  const collectionJsonLd = createCollectionJsonLd(
-    subcategory,
-    subcategoryData.title,
-    subcategoryData.description,
-    categoryProducts.length
-  );
+  const title =
+    `${categoryData.label} — ${baseData.label}`;
+
+  const description =
+    seo?.description ??
+    `Перегляньте товари «${baseData.label}» у категорії «${categoryData.label}».`;
+
+  const breadcrumbJsonLd =
+    createBreadcrumbJsonLd(
+      category,
+      categoryData.label,
+      subcategory,
+      baseData.label
+    );
+
+  const collectionJsonLd =
+    createCollectionJsonLd(
+      category,
+      subcategory,
+      title,
+      description,
+      categoryProducts.length
+    );
 
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd),
+          __html: JSON.stringify(
+            breadcrumbJsonLd
+          ),
         }}
       />
 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(collectionJsonLd),
+          __html: JSON.stringify(
+            collectionJsonLd
+          ),
         }}
       />
 
       <CategoryProductsClient
-        title={subcategoryData.title}
-        description={subcategoryData.description}
+        title={title}
+        description={description}
         products={categoryProducts}
       />
     </>

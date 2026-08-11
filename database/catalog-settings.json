@@ -1,0 +1,86 @@
+{
+  "categories": [
+    {
+      "value": "budget",
+      "label": "Бюджетні",
+      "active": true
+    },
+    {
+      "value": "standard",
+      "label": "Середня якість",
+      "active": true
+    },
+    {
+      "value": "premium",
+      "label": "Преміум",
+      "active": true
+    },
+    {
+      "value": "turkey",
+      "label": "Туреччина",
+      "active": true
+    }
+  ],
+  "bases": [
+    {
+      "value": "felt",
+      "label": "Повстяна",
+      "category": "budget",
+      "active": true
+    },
+    {
+      "value": "latex",
+      "label": "Латексна",
+      "category": "budget",
+      "active": true
+    },
+    {
+      "value": "stitched",
+      "label": "Прошита",
+      "category": "budget",
+      "active": true
+    },
+    {
+      "value": "woven",
+      "label": "Ткана",
+      "category": "standard",
+      "active": true
+    },
+    {
+      "value": "jute",
+      "label": "Джутова",
+      "category": "premium",
+      "active": true
+    },
+    {
+      "value": "woven",
+      "label": "Ткана",
+      "category": "premium",
+      "active": true
+    },
+    {
+      "value": "woven",
+      "label": "Ткана",
+      "category": "budget",
+      "active": true
+    },
+    {
+      "value": "jute",
+      "label": "Джутова",
+      "category": "turkey",
+      "active": true
+    },
+    {
+      "value": "rg",
+      "label": "ціав",
+      "category": "turkey",
+      "active": true
+    },
+    {
+      "value": "scx",
+      "label": "уа",
+      "category": "premium",
+      "active": true
+    }
+  ]
+}

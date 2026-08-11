@@ -922,6 +922,91 @@ export default function ProductDetails({
                 : "Немає в наявності"}
             </button>
 
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "20px",
+                borderRadius: "18px",
+                background:
+                  "linear-gradient(135deg, #171717 0%, #2a2117 100%)",
+                border: "1px solid #d4af37",
+                color: "#ffffff",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  gap: "14px",
+                  alignItems: "flex-start",
+                }}
+              >
+                <div
+                  style={{
+                    width: "46px",
+                    height: "46px",
+                    borderRadius: "14px",
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0,
+                    background: "#d4af37",
+                    fontSize: "24px",
+                  }}
+                >
+                  🏠
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <strong
+                    style={{
+                      display: "block",
+                      fontSize: "18px",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Хочете побачити цей килим у своїй кімнаті?
+                  </strong>
+
+                  <p
+                    style={{
+                      margin: "0 0 14px",
+                      color: "#e6dac7",
+                      lineHeight: 1.55,
+                    }}
+                  >
+                    Завантажте фото кімнати — і ми покажемо AI-примірку
+                    саме з вибраним кольором та розміром.
+                  </p>
+
+                  <Link
+                    href={{
+                      pathname: "/room-tryon",
+                      query: {
+                        product: String(product.id),
+                        color: selectedColor,
+                        width: String(selectedWidth),
+                        length: String(validLength || 1),
+                      },
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      minHeight: "48px",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "0 18px",
+                      borderRadius: "12px",
+                      background:
+                        "linear-gradient(135deg, #d4af37, #ffd95a)",
+                      color: "#111111",
+                      textDecoration: "none",
+                      fontWeight: 900,
+                    }}
+                  >
+                    ✨ Приміряти у своїй кімнаті
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {message && (
               <div
                 style={{

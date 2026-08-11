@@ -1022,5 +1022,37 @@
         "price": 320
       }
     ]
+  },
+  {
+    "id": 32,
+    "orderNumber": 32,
+    "createdAt": "2026-08-10T16:02:19.947Z",
+    "status": "confirmed",
+    "accessToken": "51a5b766-0195-423a-acc4-401bb3bbdd89",
+    "customerName": "Діма Кубішин",
+    "phone": "0938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "віділення 31",
+    "paymentMethod": "Накладений платіж",
+    "paidAmount": 0,
+    "amountDue": 320,
+    "comment": "Без коментаря",
+    "total": 320,
+    "area": 0.8,
+    "items": [
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      }
+    ],
+    "updatedAt": "2026-08-10T19:35:54.840Z",
+    "statusUpdatedAt": "2026-08-10T19:35:54.840Z"
   }
 ]

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import ProductDetails from "../../../components/ProductDetails";
 import ProductReviews from "../../../components/ProductReviews";
+import SeoInternalLinks from "../../../components/SeoInternalLinks";
 import { getAllProducts } from "../../../lib/getAllProducts";
 import type { Product } from "../../../types/product";
 
@@ -369,7 +370,10 @@ export default async function ProductPage({
         initialWidth={initialWidth}
         initialLength={initialLength}
       />
-
+<SeoInternalLinks
+  product={product}
+  relatedProducts={relatedProducts}
+/>
       <ProductReviews
         productId={product.id}
         productName={product.name}
