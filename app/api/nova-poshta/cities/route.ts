@@ -1,103 +1,62 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type NovaPoshtaCity = {
-  Ref: string;
-  Description: string;
-  DescriptionRu?: string;
-  AreaDescription?: string;
-  SettlementTypeDescription?: string;
-};
+const API_URL = "https://api.novaposhta.ua/v2.0/json/";
 
-type NovaPoshtaResponse = {
-  success: boolean;
-  data?: NovaPoshtaCity[];
-  errors?: string[];
-  warnings?: string[];
-};
-
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    const apiKey = process.env.NOVA_POSHTA_API_KEY;
-
+    const apiKey = process.env.NOVA_POSHTA_API_KEY?.trim();
     if (!apiKey) {
       return NextResponse.json(
-        {
-          message:
-            "Не знайдено NOVA_POSHTA_API_KEY у файлі .env.local",
-        },
+        { message: "NOVA_POSHTA_API_KEY не налаштований" },
         { status: 500 }
       );
     }
 
-    const query =
-      request.nextUrl.searchParams.get("q")?.trim() ?? "";
-
+    const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";
     if (query.length < 2) {
-      return NextResponse.json([]);
+      return NextResponse.json({ cities: [] });
     }
 
-    const response = await fetch(
-      "https://api.novaposhta.ua/v2.0/json/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          apiKey,
-          modelName: "Address",
-          calledMethod: "getCities",
-          methodProperties: {
-            FindByString: query,
-            Page: "1",
-            Limit: "20",
-          },
-        }),
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({
+        apiKey,
+        modelName: "Address",
+        calledMethod: "getCities",
+        methodProperties: {
+          FindByString: query,
+          Limit: "20",
+          Page: "1"
+        }
+      })
+    });
 
-    if (!response.ok) {
-      throw new Error(
-        `Нова пошта повернула помилку ${response.status}`
-      );
-    }
+    const result = await response.json();
 
-    const result =
-      (await response.json()) as NovaPoshtaResponse;
-
-    if (!result.success) {
+    if (!response.ok || !result.success) {
       return NextResponse.json(
-        {
-          message:
-            result.errors?.join(", ") ||
-            "Не вдалося знайти міста",
-        },
+        { message: result?.errors?.join(", ") || "Помилка API Нової пошти" },
         { status: 502 }
       );
     }
 
-    const cities = (result.data ?? []).map((city) => ({
-      ref: city.Ref,
-      name: city.Description,
-      area: city.AreaDescription ?? "",
-      type: city.SettlementTypeDescription ?? "",
+    const cities = (result.data ?? []).map((item: any) => ({
+      ref: item.Ref,
+      name: item.Description,
+      area: item.AreaDescription ?? "",
+      region: item.RegionsDescription ?? ""
     }));
 
-    return NextResponse.json(cities);
+    return NextResponse.json({ cities });
   } catch (error) {
-    console.error("Nova Poshta cities error:", error);
-
+    console.error(error);
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Помилка пошуку міст",
-      },
+      { message: "Не вдалося отримати список міст" },
       { status: 500 }
     );
   }

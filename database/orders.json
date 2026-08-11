@@ -1054,5 +1054,55 @@
     ],
     "updatedAt": "2026-08-10T19:35:54.840Z",
     "statusUpdatedAt": "2026-08-10T19:35:54.840Z"
+  },
+  {
+    "id": 33,
+    "orderNumber": 33,
+    "createdAt": "2026-08-11T21:08:48.475Z",
+    "status": "new",
+    "accessToken": "14b5c608-5a48-441c-90df-84663a7f21db",
+    "customerName": "Діма Кубішин",
+    "phone": "+380938668670",
+    "delivery": "Нова пошта",
+    "city": "Хмельницький",
+    "warehouse": "Відділення №3 (до 30 кг на одне місце): вул. Сіцінського (ран. Ватутіна), 11",
+    "paymentMethod": "Онлайн-оплата — Apple Pay / Google Pay / картка",
+    "paidAmount": 0,
+    "amountDue": 9844,
+    "comment": "Без коментаря",
+    "total": 9844,
+    "area": 24.61,
+    "items": [
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 0.8,
+        "length": 1,
+        "area": 0.8,
+        "quantity": 1,
+        "price": 320
+      },
+      {
+        "name": "Linea",
+        "image": "/products/1784579167166-zdigof-photo-6-2026-07-20-22-28-09.jpg",
+        "color": "сірий",
+        "width": 0.8,
+        "length": 16,
+        "area": 12.8,
+        "quantity": 1,
+        "price": 5120
+      },
+      {
+        "name": "Egipet",
+        "image": "/products/1784579268008-hdxpsx-photo-7-2026-07-16-22-18-59.jpg",
+        "color": "Бежевий",
+        "width": 3,
+        "length": 3.67,
+        "area": 11.01,
+        "quantity": 1,
+        "price": 4404
+      }
+    ]
   }
 ]

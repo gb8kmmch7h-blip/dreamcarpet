@@ -10,6 +10,18 @@ type PaymentMethod =
   | "prepayment"
   | "full-payment";
 
+type NovaPoshtaCity = {
+  ref: string;
+  name: string;
+  area?: string;
+  region?: string;
+};
+
+type NovaPoshtaWarehouse = {
+  ref: string;
+  name: string;
+};
+
 const ORDER_TOKENS_STORAGE_KEY =
   "dreamcarpet-order-tokens";
 
@@ -48,6 +60,15 @@ export default function CheckoutPage() {
   const [delivery, setDelivery] =
     useState("nova-poshta");
 
+  const [cityQuery, setCityQuery] = useState("");
+  const [cityRef, setCityRef] = useState("");
+  const [cityOptions, setCityOptions] = useState<NovaPoshtaCity[]>([]);
+  const [warehouses, setWarehouses] = useState<NovaPoshtaWarehouse[]>([]);
+  const [warehouseValue, setWarehouseValue] = useState("");
+  const [isCitiesLoading, setIsCitiesLoading] = useState(false);
+  const [isWarehousesLoading, setIsWarehousesLoading] = useState(false);
+  const [showCityOptions, setShowCityOptions] = useState(false);
+
   const totalArea = useMemo(() => {
     return cart.reduce(
       (sum, item) =>
@@ -81,6 +102,103 @@ export default function CheckoutPage() {
       setPayment(allowedPayments[0]);
     }
   }, [allowedPayments, payment]);
+
+  useEffect(() => {
+    if (delivery !== "nova-poshta") return;
+
+    const query = cityQuery.trim();
+
+    if (query.length < 2 || cityRef) {
+      if (query.length < 2) setCityOptions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setIsCitiesLoading(true);
+
+        const response = await fetch(
+          `/api/nova-poshta/cities?q=${encodeURIComponent(query)}`,
+          { cache: "no-store", signal: controller.signal }
+        );
+
+        const data = (await response.json()) as {
+          cities?: NovaPoshtaCity[];
+          message?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(data.message || "Не вдалося знайти місто");
+        }
+
+        setCityOptions(Array.isArray(data.cities) ? data.cities : []);
+        setShowCityOptions(true);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error("Nova Poshta cities:", error);
+        setCityOptions([]);
+      } finally {
+        setIsCitiesLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [cityQuery, cityRef, delivery]);
+
+  useEffect(() => {
+    if (delivery !== "nova-poshta" || !cityRef) {
+      setWarehouses([]);
+      setWarehouseValue("");
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadWarehouses() {
+      try {
+        setIsWarehousesLoading(true);
+
+        const response = await fetch(
+          `/api/nova-poshta/warehouses?cityRef=${encodeURIComponent(cityRef)}`,
+          { cache: "no-store", signal: controller.signal }
+        );
+
+        const data = (await response.json()) as {
+          warehouses?: NovaPoshtaWarehouse[];
+          message?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(data.message || "Не вдалося завантажити відділення");
+        }
+
+        setWarehouses(Array.isArray(data.warehouses) ? data.warehouses : []);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error("Nova Poshta warehouses:", error);
+        setWarehouses([]);
+      } finally {
+        setIsWarehousesLoading(false);
+      }
+    }
+
+    void loadWarehouses();
+
+    return () => controller.abort();
+  }, [cityRef, delivery]);
+
+  function selectCity(city: NovaPoshtaCity) {
+    setCityQuery(city.name);
+    setCityRef(city.ref);
+    setCityOptions([]);
+    setShowCityOptions(false);
+    setWarehouseValue("");
+  }
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
@@ -500,26 +618,105 @@ export default function CheckoutPage() {
 
             {delivery === "nova-poshta" && (
               <>
-                <div>
+                <div style={{ position: "relative", zIndex: 20 }}>
                   <label>Місто або населений пункт</label>
 
                   <input
                     name="city"
                     required
-                    placeholder="Наприклад: Хмельницький"
+                    autoComplete="off"
+                    value={cityQuery}
+                    onChange={(event) => {
+                      setCityQuery(event.target.value);
+                      setCityRef("");
+                      setWarehouseValue("");
+                      setWarehouses([]);
+                      setShowCityOptions(true);
+                    }}
+                    onFocus={() => setShowCityOptions(true)}
+                    placeholder="Почніть вводити: Хмельницький"
                     style={inputStyle}
                   />
+
+                  {isCitiesLoading && (
+                    <div style={{ marginTop: "7px", color: "#777", fontSize: "13px" }}>
+                      Пошук міста...
+                    </div>
+                  )}
+
+                  {showCityOptions &&
+                    cityOptions.length > 0 && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 6px)",
+                          left: 0,
+                          right: 0,
+                          maxHeight: "280px",
+                          overflowY: "auto",
+                          border: "1px solid #d8d8d8",
+                          borderRadius: "12px",
+                          background: "#fff",
+                          boxShadow: "0 16px 35px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        {cityOptions.map((city) => (
+                          <button
+                            key={city.ref}
+                            type="button"
+                            onClick={() => selectCity(city)}
+                            style={{
+                              display: "block",
+                              width: "100%",
+                              padding: "12px 14px",
+                              border: "none",
+                              borderBottom: "1px solid #eee",
+                              background: "#fff",
+                              color: "#171717",
+                              textAlign: "left",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <strong>{city.name}</strong>
+                            {(city.area || city.region) && (
+                              <span style={{ display: "block", marginTop: "3px", color: "#777", fontSize: "12px" }}>
+                                {[city.area, city.region].filter(Boolean).join(", ")}
+                              </span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                 </div>
 
                 <div>
                   <label>Відділення Нової пошти</label>
 
-                  <input
+                  <select
                     name="warehouse"
                     required
-                    placeholder="Наприклад: Відділення №1"
-                    style={inputStyle}
-                  />
+                    value={warehouseValue}
+                    onChange={(event) => setWarehouseValue(event.target.value)}
+                    disabled={!cityRef || isWarehousesLoading}
+                    style={{
+                      ...inputStyle,
+                      background: !cityRef ? "#eeeeee" : "#ffffff",
+                    }}
+                  >
+                    <option value="">
+                      {!cityRef
+                        ? "Спочатку оберіть місто"
+                        : isWarehousesLoading
+                          ? "Завантаження відділень..."
+                          : "Оберіть відділення"}
+                    </option>
+
+                    {warehouses.map((warehouse) => (
+                      <option key={warehouse.ref} value={warehouse.name}>
+                        {warehouse.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </>
             )}
