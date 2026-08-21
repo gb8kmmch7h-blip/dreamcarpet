@@ -1,25 +1,20 @@
-import {
-  readFile,
-  writeFile,
-} from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
+
+import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
+
+export const runtime = "nodejs";
 
 type OrderStatus =
   | "new"
+  | "pending"
   | "processing"
-  | "manufacturing"
-  | "preparing"
+  | "confirmed"
+  | "production"
+  | "ready"
   | "shipped"
   | "completed"
-  | "cancelled";
-
-type SavedOrder = {
-  id: number;
-  orderNumber: number;
-  status: OrderStatus;
-  [key: string]: unknown;
-};
+  | "canceled"
+  | "returned";
 
 type StatusRequest = {
   orderNumber?: number;
@@ -28,44 +23,20 @@ type StatusRequest = {
 
 const allowedStatuses: OrderStatus[] = [
   "new",
+  "pending",
   "processing",
-  "manufacturing",
-  "preparing",
+  "confirmed",
+  "production",
+  "ready",
   "shipped",
   "completed",
-  "cancelled",
+  "canceled",
+  "returned",
 ];
-
-function getOrdersFilePath() {
-  return path.join(
-    process.cwd(),
-    "database",
-    "orders.json"
-  );
-}
-
-async function readOrders(): Promise<SavedOrder[]> {
-  const fileContent = await readFile(
-    getOrdersFilePath(),
-    "utf-8"
-  );
-
-  const parsedData: unknown =
-    JSON.parse(fileContent);
-
-  if (!Array.isArray(parsedData)) {
-    throw new Error(
-      "Файл orders.json має неправильний формат"
-    );
-  }
-
-  return parsedData as SavedOrder[];
-}
 
 export async function PATCH(request: Request) {
   try {
-    const body =
-      (await request.json()) as StatusRequest;
+    const body = (await request.json()) as StatusRequest;
 
     const orderNumber = body.orderNumber;
     const status = body.status;
@@ -77,8 +48,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Не вказано номер замовлення",
+          message: "Не вказано номер замовлення",
         },
         {
           status: 400,
@@ -93,8 +63,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Вказано неправильний статус",
+          message: "Вказано неправильний статус",
         },
         {
           status: 400,
@@ -102,19 +71,41 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const orders = await readOrders();
+    const now = new Date().toISOString();
 
-    const orderIndex = orders.findIndex(
-      (order) =>
-        order.orderNumber === orderNumber
-    );
+    const { data, error } = await supabaseAdmin
+      .from("orders")
+      .update({
+        status,
+        updated_at: now,
+        status_updated_at: now,
+      })
+      .eq("order_number", orderNumber)
+      .select("*")
+      .maybeSingle();
 
-    if (orderIndex === -1) {
+    if (error) {
+      console.error(
+        "Supabase order status update error:",
+        error
+      );
+
       return NextResponse.json(
         {
           success: false,
-          message:
-            "Замовлення не знайдено",
+          message: "Не вдалося змінити статус замовлення",
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Замовлення не знайдено",
         },
         {
           status: 404,
@@ -122,22 +113,21 @@ export async function PATCH(request: Request) {
       );
     }
 
-    orders[orderIndex] = {
-      ...orders[orderIndex],
-      status,
-    };
-
-    await writeFile(
-      getOrdersFilePath(),
-      JSON.stringify(orders, null, 2),
-      "utf-8"
-    );
-
     return NextResponse.json({
       success: true,
-      message:
-        "Статус замовлення змінено",
-      order: orders[orderIndex],
+      message: "Статус замовлення змінено",
+      order: {
+        ...data,
+        orderNumber: Number(data.order_number),
+        accessToken: data.access_token,
+        customerName: data.customer_name,
+        paymentMethod: data.payment_method,
+        paidAmount: Number(data.paid_amount ?? 0),
+        amountDue: Number(data.amount_due ?? 0),
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        statusUpdatedAt: data.status_updated_at,
+      },
     });
   } catch (error) {
     console.error(
@@ -148,8 +138,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message:
-          "Не вдалося змінити статус замовлення",
+        message: "Не вдалося змінити статус замовлення",
       },
       {
         status: 500,

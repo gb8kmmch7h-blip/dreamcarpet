@@ -1,7 +1,7 @@
-import fs from "fs/promises";
-import path from "path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+import { supabaseAdmin } from "../../../../../lib/supabaseAdmin";
 
 import PrintButton from "./PrintButton";
 
@@ -34,12 +34,6 @@ type Order = {
   createdAt?: string;
   items?: OrderItem[];
 };
-
-const ordersFile = path.join(
-  process.cwd(),
-  "database",
-  "orders.json"
-);
 
 const statusLabels: Record<string, string> = {
   new: "Нове",
@@ -74,20 +68,116 @@ function formatDate(value?: string) {
 }
 
 async function getOrder(id: string): Promise<Order | null> {
-  try {
-    const file = await fs.readFile(ordersFile, "utf8");
-    const orders = JSON.parse(file) as Order[];
+  const numericId = Number(id);
 
-    return (
-      orders.find(
-        (order) =>
-          String(order.id) === String(id) ||
-          String(order.orderNumber) === String(id)
-      ) || null
-    );
-  } catch {
+  let query = supabaseAdmin
+    .from("orders")
+    .select("*");
+
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const { data: byId, error: byIdError } = await query
+      .eq("id", numericId)
+      .maybeSingle();
+
+    if (byIdError) {
+      console.error("Supabase print order by id error:", byIdError);
+      throw new Error("Не вдалося завантажити замовлення");
+    }
+
+    if (byId) {
+      return {
+        id: String(byId.id),
+        orderNumber: Number(byId.order_number),
+        status: byId.status ?? "new",
+        customerName: byId.customer_name ?? "",
+        phone: byId.phone ?? "",
+        delivery: byId.delivery ?? "",
+        city: byId.city ?? "",
+        warehouse: byId.warehouse ?? "",
+        paymentMethod: byId.payment_method ?? "",
+        comment: byId.comment ?? "",
+        total: Number(byId.total ?? 0),
+        paidAmount: Number(byId.paid_amount ?? 0),
+        amountDue: Number(byId.amount_due ?? 0),
+        createdAt: byId.created_at ?? "",
+        items: Array.isArray(byId.items)
+          ? (byId.items as OrderItem[])
+          : [],
+      };
+    }
+
+    const { data: byOrderNumber, error: byOrderNumberError } =
+      await supabaseAdmin
+        .from("orders")
+        .select("*")
+        .eq("order_number", numericId)
+        .maybeSingle();
+
+    if (byOrderNumberError) {
+      console.error(
+        "Supabase print order by order number error:",
+        byOrderNumberError
+      );
+      throw new Error("Не вдалося завантажити замовлення");
+    }
+
+    if (byOrderNumber) {
+      return {
+        id: String(byOrderNumber.id),
+        orderNumber: Number(byOrderNumber.order_number),
+        status: byOrderNumber.status ?? "new",
+        customerName: byOrderNumber.customer_name ?? "",
+        phone: byOrderNumber.phone ?? "",
+        delivery: byOrderNumber.delivery ?? "",
+        city: byOrderNumber.city ?? "",
+        warehouse: byOrderNumber.warehouse ?? "",
+        paymentMethod: byOrderNumber.payment_method ?? "",
+        comment: byOrderNumber.comment ?? "",
+        total: Number(byOrderNumber.total ?? 0),
+        paidAmount: Number(byOrderNumber.paid_amount ?? 0),
+        amountDue: Number(byOrderNumber.amount_due ?? 0),
+        createdAt: byOrderNumber.created_at ?? "",
+        items: Array.isArray(byOrderNumber.items)
+          ? (byOrderNumber.items as OrderItem[])
+          : [],
+      };
+    }
+  }
+
+  const { data: byToken, error: byTokenError } = await supabaseAdmin
+    .from("orders")
+    .select("*")
+    .eq("access_token", id)
+    .maybeSingle();
+
+  if (byTokenError) {
+    console.error("Supabase print order by token error:", byTokenError);
+    throw new Error("Не вдалося завантажити замовлення");
+  }
+
+  if (!byToken) {
     return null;
   }
+
+  return {
+    id: String(byToken.id),
+    orderNumber: Number(byToken.order_number),
+    status: byToken.status ?? "new",
+    customerName: byToken.customer_name ?? "",
+    phone: byToken.phone ?? "",
+    delivery: byToken.delivery ?? "",
+    city: byToken.city ?? "",
+    warehouse: byToken.warehouse ?? "",
+    paymentMethod: byToken.payment_method ?? "",
+    comment: byToken.comment ?? "",
+    total: Number(byToken.total ?? 0),
+    paidAmount: Number(byToken.paid_amount ?? 0),
+    amountDue: Number(byToken.amount_due ?? 0),
+    createdAt: byToken.created_at ?? "",
+    items: Array.isArray(byToken.items)
+      ? (byToken.items as OrderItem[])
+      : [],
+  };
 }
 
 export default async function PrintOrderPage({

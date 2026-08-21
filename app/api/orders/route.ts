@@ -1,12 +1,10 @@
-import {
-  mkdir,
-  readFile,
-  writeFile,
-} from "fs/promises";
+import { readFile } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
+
+import { supabaseAdmin } from "../../../lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
@@ -54,7 +52,6 @@ type SavedOrder = {
   items: OrderItem[];
 };
 
-const START_ORDER_NUMBER = 4654;
 
 function escapeHtml(value: string) {
   return value
@@ -70,81 +67,167 @@ function formatNumber(value: number) {
   }).format(value);
 }
 
-function getDatabaseDirectory() {
-  return path.join(process.cwd(), "database");
-}
+async function getNextOrderNumber() {
+  const { data, error } = await supabaseAdmin.rpc(
+    "get_next_order_number"
+  );
 
-function getOrdersFilePath() {
-  return path.join(getDatabaseDirectory(), "orders.json");
-}
+  if (error) {
+    console.error("Supabase order number error:", error);
 
-function getCounterFilePath() {
-  return path.join(getDatabaseDirectory(), "order-counter.json");
-}
+    throw new Error(
+      "Не вдалося отримати наступний номер замовлення"
+    );
+  }
 
-async function ensureDatabaseDirectory() {
-  await mkdir(getDatabaseDirectory(), { recursive: true });
+  const orderNumber = Number(data);
+
+  if (
+    !Number.isInteger(orderNumber) ||
+    orderNumber < 1
+  ) {
+    console.error(
+      "Invalid Supabase order number:",
+      data
+    );
+
+    throw new Error(
+      "Supabase повернув неправильний номер замовлення"
+    );
+  }
+
+  return orderNumber;
 }
 
 async function readOrders(): Promise<SavedOrder[]> {
-  await ensureDatabaseDirectory();
+  const { data, error } = await supabaseAdmin
+    .from("orders")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    });
 
-  try {
-    const content = await readFile(getOrdersFilePath(), "utf-8");
-    const parsed: unknown = JSON.parse(content);
-    return Array.isArray(parsed) ? (parsed as SavedOrder[]) : [];
-  } catch {
-    await writeFile(
-      getOrdersFilePath(),
-      JSON.stringify([], null, 2),
-      "utf-8"
+  if (error) {
+    console.error(
+      "Supabase read orders error:",
+      error
     );
-    return [];
-  }
-}
 
-async function saveOrder(order: SavedOrder) {
-  const orders = await readOrders();
-  orders.push(order);
-
-  await writeFile(
-    getOrdersFilePath(),
-    JSON.stringify(orders, null, 2),
-    "utf-8"
-  );
-}
-
-async function getNextOrderNumber() {
-  await ensureDatabaseDirectory();
-
-  const counterFile = getCounterFilePath();
-  let currentNumber = START_ORDER_NUMBER - 1;
-
-  try {
-    const content = await readFile(counterFile, "utf-8");
-    const parsed = JSON.parse(content) as {
-      lastOrderNumber?: number;
-    };
-
-    if (
-      typeof parsed.lastOrderNumber === "number" &&
-      Number.isFinite(parsed.lastOrderNumber)
-    ) {
-      currentNumber = parsed.lastOrderNumber;
-    }
-  } catch {
-    // створиться автоматично
+    throw new Error(
+      "Не вдалося завантажити замовлення"
+    );
   }
 
-  const nextNumber = currentNumber + 1;
+  return (data ?? []).map((order) => ({
+    id: Number(order.id),
+    orderNumber: Number(order.order_number),
+    createdAt:
+      order.created_at ??
+      new Date().toISOString(),
+    status:
+      order.status ?? "new",
+    accessToken:
+      order.access_token ?? "",
+    customerName:
+      order.customer_name ?? "",
+    phone:
+      order.phone ?? "",
+    delivery:
+      order.delivery ?? "",
+    city:
+      order.city ?? "",
+    warehouse:
+      order.warehouse ?? "",
+    paymentMethod:
+      order.payment_method ?? "",
+    paidAmount:
+      Number(order.paid_amount ?? 0),
+    amountDue:
+      Number(order.amount_due ?? 0),
+    comment:
+      order.comment ?? "",
+    total:
+      Number(order.total ?? 0),
+    area:
+      Number(order.area ?? 0),
+    items:
+      Array.isArray(order.items)
+        ? (order.items as OrderItem[])
+        : [],
+  }));
+}
 
-  await writeFile(
-    counterFile,
-    JSON.stringify({ lastOrderNumber: nextNumber }, null, 2),
-    "utf-8"
-  );
+async function saveOrder(
+  order: SavedOrder
+) {
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .insert({
+      order_number:
+        order.orderNumber,
 
-  return nextNumber;
+      access_token:
+        order.accessToken,
+
+      customer_name:
+        order.customerName,
+
+      phone:
+        order.phone,
+
+      delivery:
+        order.delivery,
+
+      city:
+        order.city,
+
+      warehouse:
+        order.warehouse,
+
+      payment_method:
+        order.paymentMethod,
+
+      paid_amount:
+        order.paidAmount,
+
+      amount_due:
+        order.amountDue,
+
+      comment:
+        order.comment,
+
+      total:
+        order.total,
+
+      area:
+        order.area,
+
+      items:
+        order.items,
+
+      status:
+        order.status,
+
+      created_at:
+        order.createdAt,
+
+      updated_at:
+        order.createdAt,
+
+      status_updated_at:
+        order.createdAt,
+    });
+
+  if (error) {
+    console.error(
+      "Supabase save order error:",
+      error
+    );
+
+    throw new Error(
+      "Не вдалося зберегти замовлення"
+    );
+  }
 }
 
 async function getLocalProductPhoto(imagePath?: string) {

@@ -514,39 +514,125 @@ export default async function CatalogPage() {
           }
         }
 
-        @media (
-          max-width: 520px
-        ) {
+        @media (max-width: 520px) {
           .catalog-page {
-            padding:
-              20px
-              14px
-              50px;
+            width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            padding: 14px 10px 40px;
+          }
+
+          .catalog-container {
+            width: 100%;
+            min-width: 0;
+          }
+
+          .breadcrumbs {
+            gap: 7px;
+            margin-bottom: 22px;
+            font-size: 12px;
           }
 
           .catalog-header {
-            margin-bottom:
-              28px;
+            margin-bottom: 20px;
+          }
+
+          .eyebrow {
+            margin-bottom: 7px;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+          }
+
+          h1 {
+            font-size: 32px;
+            line-height: 1.05;
+          }
+
+          .subtitle {
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.45;
+          }
+
+          .categories-grid {
+            gap: 12px;
           }
 
           .category-card,
           .category-image {
-            min-height: 380px;
+            min-height: 270px;
+            border-radius: 16px;
+          }
 
-            border-radius:
-              20px;
+          .category-number {
+            top: 14px;
+            right: 15px;
+            font-size: 15px;
           }
 
           .category-content {
-            padding: 23px;
+            padding: 16px;
+          }
+
+          .products-count {
+            margin-bottom: 8px;
+            padding: 5px 8px;
+            font-size: 10px;
+          }
+
+          .category-content h2 {
+            margin-bottom: 7px;
+            font-size: 25px;
+            line-height: 1.05;
           }
 
           .category-content p {
-            font-size: 14px;
+            margin-bottom: 12px;
+            font-size: 12px;
+            line-height: 1.4;
           }
 
           .open-button {
             max-width: none;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+          }
+
+          .open-button span {
+            font-size: 17px;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .catalog-page {
+            padding-left: 7px;
+            padding-right: 7px;
+          }
+
+          h1 {
+            font-size: 28px;
+          }
+
+          .subtitle {
+            font-size: 13px;
+          }
+
+          .category-card,
+          .category-image {
+            min-height: 240px;
+          }
+
+          .category-content {
+            padding: 13px;
+          }
+
+          .category-content h2 {
+            font-size: 22px;
+          }
+
+          .category-content p {
+            font-size: 11px;
           }
         }
       `}</style>

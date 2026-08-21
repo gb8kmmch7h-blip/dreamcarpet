@@ -345,6 +345,7 @@ export default function ProductDetails({
 
   return (
     <main
+      className="product-page"
       style={{
         minHeight: "100vh",
         padding: "35px 20px 70px",
@@ -353,6 +354,7 @@ export default function ProductDetails({
       }}
     >
       <div
+        className="product-container"
         style={{
           maxWidth: "1350px",
           margin: "0 auto",
@@ -372,6 +374,7 @@ export default function ProductDetails({
         </div>
 
         <div
+          className="product-main-grid"
           style={{
             display: "grid",
             gridTemplateColumns:
@@ -380,8 +383,9 @@ export default function ProductDetails({
             alignItems: "start",
           }}
         >
-          <section>
+          <section className="product-gallery">
             <div
+              className="product-main-image"
               style={{
                 position: "relative",
                 width: "100%",
@@ -510,6 +514,7 @@ export default function ProductDetails({
 
 
           <section
+            className="product-info-card"
             style={{
               padding: "35px",
               borderRadius: "24px",
@@ -531,6 +536,7 @@ export default function ProductDetails({
             </p>
 
             <h1
+              className="product-title"
               style={{
                 margin: "0 0 15px",
                 fontSize: "clamp(34px, 5vw, 52px)",
@@ -550,6 +556,7 @@ export default function ProductDetails({
             </p>
 
             <div
+              className="availability-box"
               style={{
                 marginBottom: "25px",
                 padding: "18px",
@@ -583,7 +590,7 @@ export default function ProductDetails({
               </div>
             </div>
 
-            <div style={{ marginBottom: "28px" }}>
+            <div className="product-price" style={{ marginBottom: "28px" }}>
               <span
                 style={{
                   fontSize: "38px",
@@ -739,6 +746,7 @@ export default function ProductDetails({
                   </label>
 
                   <div
+                    className="length-row"
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -771,6 +779,7 @@ export default function ProductDetails({
                 </div>
 
                 <div
+                  className="price-calculator"
                   style={{
                     marginBottom: "25px",
                     padding: "22px",
@@ -825,6 +834,7 @@ export default function ProductDetails({
                   </div>
 
                   <div
+                    className="total-price-row"
                     style={{
                       paddingTop: "15px",
                       borderTop:
@@ -923,6 +933,7 @@ export default function ProductDetails({
             </button>
 
             <div
+              className="tryon-box"
               style={{
                 marginTop: "16px",
                 padding: "20px",
@@ -1049,6 +1060,7 @@ export default function ProductDetails({
         <ProductCareBlock product={product} />
 
         <section
+          className="product-lower-section"
           style={{
             marginTop: "45px",
             padding: "35px",
@@ -1104,6 +1116,7 @@ export default function ProductDetails({
 
         {features.length > 0 && (
           <section
+            className="product-lower-section"
             style={{
               marginTop: "25px",
               padding: "35px",
@@ -1147,6 +1160,7 @@ export default function ProductDetails({
 
         {(styles.length > 0 || rooms.length > 0) && (
           <section
+            className="product-lower-section"
             style={{
               marginTop: "25px",
               padding: "35px",
@@ -1223,6 +1237,7 @@ export default function ProductDetails({
         )}
 
         <section
+          className="product-lower-section"
           style={{
             marginTop: "25px",
             padding: "35px",
@@ -1251,6 +1266,338 @@ export default function ProductDetails({
               "Опис цього товару поки що не доданий."}
           </div>
         </section>
+
+        <style jsx>{`
+          .product-page {
+            overflow-x: hidden;
+          }
+
+          .product-container,
+          .product-main-grid,
+          .product-gallery,
+          .product-info-card {
+            min-width: 0;
+          }
+
+          @media (max-width: 700px) {
+            :global(html),
+            :global(body) {
+              width: 100%;
+              max-width: 100%;
+              overflow-x: hidden;
+            }
+
+            .product-page {
+              width: 100% !important;
+              max-width: 100% !important;
+              box-sizing: border-box;
+              padding: 12px 8px 38px !important;
+              overflow-x: hidden !important;
+            }
+
+            .product-container {
+              width: 100% !important;
+              max-width: 100% !important;
+              min-width: 0 !important;
+              box-sizing: border-box;
+              overflow: hidden;
+            }
+
+            .product-main-grid {
+              display: grid !important;
+              grid-template-columns: minmax(0, 1fr) !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              min-width: 0 !important;
+              gap: 12px !important;
+              box-sizing: border-box;
+            }
+
+            .product-gallery,
+            .product-info-card {
+              width: 100% !important;
+              max-width: 100% !important;
+              min-width: 0 !important;
+              box-sizing: border-box !important;
+            }
+
+            .product-main-image {
+              width: 100% !important;
+              max-width: 100% !important;
+              aspect-ratio: 4 / 3 !important;
+              border-radius: 14px !important;
+            }
+
+            .product-gallery > div:last-child {
+              grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+              gap: 6px !important;
+              margin-top: 8px !important;
+            }
+
+            .product-info-card {
+              padding: 14px 12px !important;
+              border-radius: 15px !important;
+            }
+
+            .product-info-card > p:first-child {
+              font-size: 12px !important;
+              margin-bottom: 5px !important;
+            }
+
+            .product-title {
+              margin-bottom: 8px !important;
+              font-size: 27px !important;
+              line-height: 1.05 !important;
+              letter-spacing: -0.4px;
+              overflow-wrap: anywhere;
+            }
+
+            .product-title + p {
+              margin-bottom: 14px !important;
+              font-size: 14px !important;
+            }
+
+            .availability-box {
+              margin-bottom: 14px !important;
+              padding: 11px !important;
+              border-radius: 11px !important;
+              font-size: 14px;
+            }
+
+            .product-price {
+              margin-bottom: 16px !important;
+            }
+
+            .product-price span:first-child {
+              font-size: 26px !important;
+            }
+
+            .product-price span:last-child {
+              font-size: 14px !important;
+            }
+
+            .product-info-card button {
+              max-width: 100%;
+              box-sizing: border-box;
+            }
+
+            .length-row {
+              width: 100%;
+              min-width: 0;
+              flex-wrap: wrap;
+            }
+
+            .length-row input {
+              width: 120px !important;
+              max-width: 100%;
+              box-sizing: border-box;
+              padding: 10px !important;
+              font-size: 16px !important;
+            }
+
+            .price-calculator {
+              padding: 12px !important;
+              border-radius: 12px !important;
+            }
+
+            .price-calculator > div {
+              font-size: 14px;
+            }
+
+            .total-price-row {
+              align-items: flex-start !important;
+              flex-direction: column;
+              gap: 4px !important;
+            }
+
+            .total-price-row span {
+              font-size: 15px !important;
+            }
+
+            .total-price-row strong {
+              font-size: 23px !important;
+              overflow-wrap: anywhere;
+            }
+
+            .tryon-box {
+              padding: 12px !important;
+              border-radius: 13px !important;
+            }
+
+            .tryon-box > div {
+              flex-direction: column;
+              gap: 10px !important;
+            }
+
+            .tryon-box > div > div:first-child {
+              width: 38px !important;
+              height: 38px !important;
+              border-radius: 10px !important;
+              font-size: 20px !important;
+            }
+
+            .tryon-box strong {
+              font-size: 16px !important;
+            }
+
+            .tryon-box p {
+              font-size: 14px !important;
+            }
+
+            .tryon-box a {
+              width: 100%;
+              min-height: 44px !important;
+              box-sizing: border-box;
+              padding: 0 12px !important;
+              text-align: center;
+              font-size: 14px !important;
+            }
+
+            .product-lower-section {
+              margin-top: 14px !important;
+              padding: 14px 12px !important;
+              border-radius: 15px !important;
+              box-sizing: border-box;
+            }
+
+            .product-lower-section h2 {
+              font-size: 23px !important;
+            }
+
+            .product-lower-section > div {
+              min-width: 0;
+            }
+          }
+
+          @media (max-width: 380px) {
+            .product-page {
+              padding-left: 6px !important;
+              padding-right: 6px !important;
+            }
+
+            .product-info-card {
+              padding: 12px 10px !important;
+            }
+
+            .product-title {
+              font-size: 24px !important;
+            }
+
+            .product-price span:first-child {
+              font-size: 24px !important;
+            }
+
+            .product-main-image {
+              aspect-ratio: 16 / 11 !important;
+            }
+
+            .price-calculator {
+              padding: 10px !important;
+            }
+          }
+          }
+
+          @media (max-width: 420px) {
+            .product-page {
+              padding: 6px 4px 28px !important;
+            }
+
+            .product-main-grid {
+              gap: 8px !important;
+            }
+
+            .product-main-image {
+              aspect-ratio: 16 / 9 !important;
+              border-radius: 10px !important;
+            }
+
+            .product-gallery > div:last-child {
+              gap: 4px !important;
+            }
+
+            .product-info-card {
+              padding: 10px 8px !important;
+              border-radius: 12px !important;
+            }
+
+            .product-title {
+              font-size: 21px !important;
+              line-height: 1 !important;
+              margin-bottom: 6px !important;
+            }
+
+            .product-title + p {
+              font-size: 12px !important;
+              margin-bottom: 10px !important;
+            }
+
+            .availability-box {
+              padding: 8px !important;
+              margin-bottom: 10px !important;
+              font-size: 12px !important;
+            }
+
+            .product-price {
+              margin-bottom: 12px !important;
+            }
+
+            .product-price span:first-child {
+              font-size: 21px !important;
+            }
+
+            .product-price span:last-child {
+              font-size: 12px !important;
+            }
+
+            .length-row input {
+              width: 105px !important;
+              min-height: 38px !important;
+              padding: 7px !important;
+              font-size: 14px !important;
+            }
+
+            .price-calculator {
+              padding: 8px !important;
+              border-radius: 10px !important;
+            }
+
+            .price-calculator > div {
+              font-size: 12px !important;
+            }
+
+            .total-price-row span {
+              font-size: 13px !important;
+            }
+
+            .total-price-row strong {
+              font-size: 20px !important;
+            }
+
+            .tryon-box {
+              padding: 9px !important;
+            }
+
+            .tryon-box strong {
+              font-size: 14px !important;
+            }
+
+            .tryon-box p,
+            .tryon-box a {
+              font-size: 12px !important;
+            }
+
+            .product-lower-section {
+              padding: 10px 8px !important;
+              margin-top: 10px !important;
+              border-radius: 12px !important;
+            }
+
+            .product-lower-section h2 {
+              font-size: 20px !important;
+            }
+          }
+
+        `}</style>
       </div>
     </main>
   );

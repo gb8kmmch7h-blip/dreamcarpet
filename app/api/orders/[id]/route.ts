@@ -1,14 +1,8 @@
-import fs from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+import { supabaseAdmin } from "../../../../lib/supabaseAdmin";
 
-const ordersFile = path.join(
-  process.cwd(),
-  "database",
-  "orders.json"
-);
+export const runtime = "nodejs";
 
 const allowedStatuses = [
   "new",
@@ -20,50 +14,85 @@ const allowedStatuses = [
   "shipped",
   "completed",
   "canceled",
+  "returned",
 ];
 
-type Order = {
-  id?: string;
-  orderNumber?: number;
-  accessToken?: string;
-  status?: string;
-  paidAmount?: number;
-  amountDue?: number;
-  total?: number;
-  updatedAt?: string;
-  statusUpdatedAt?: string;
+type DbOrder = {
+  id: number;
+  order_number: number;
+  access_token: string;
+  status: string;
+  paid_amount: number | string | null;
+  amount_due: number | string | null;
+  total: number | string | null;
+  updated_at: string | null;
+  status_updated_at: string | null;
   [key: string]: unknown;
 };
 
-async function readOrders(): Promise<Order[]> {
-  try {
-    const fileContent = await fs.readFile(ordersFile, "utf8");
-    const orders = JSON.parse(fileContent);
+function toClientOrder(order: DbOrder) {
+  return {
+    ...order,
+    orderNumber: Number(order.order_number),
+    accessToken: order.access_token,
+    paidAmount: Number(order.paid_amount ?? 0),
+    amountDue: Number(order.amount_due ?? 0),
+    total: Number(order.total ?? 0),
+    updatedAt: order.updated_at,
+    statusUpdatedAt: order.status_updated_at,
+  };
+}
 
-    return Array.isArray(orders) ? orders : [];
-  } catch {
-    return [];
+async function findOrder(id: string): Promise<DbOrder | null> {
+  const numericId = Number(id);
+
+  if (Number.isInteger(numericId) && numericId > 0) {
+    const byId = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .eq("id", numericId)
+      .maybeSingle();
+
+    if (byId.error) {
+      console.error("Supabase find order by id error:", byId.error);
+      throw new Error("Не вдалося знайти замовлення");
+    }
+
+    if (byId.data) {
+      return byId.data as DbOrder;
+    }
+
+    const byOrderNumber = await supabaseAdmin
+      .from("orders")
+      .select("*")
+      .eq("order_number", numericId)
+      .maybeSingle();
+
+    if (byOrderNumber.error) {
+      console.error(
+        "Supabase find order by order number error:",
+        byOrderNumber.error
+      );
+      throw new Error("Не вдалося знайти замовлення");
+    }
+
+    if (byOrderNumber.data) {
+      return byOrderNumber.data as DbOrder;
+    }
   }
-}
 
-async function saveOrders(orders: Order[]) {
-  await fs.mkdir(path.dirname(ordersFile), {
-    recursive: true,
-  });
+  const byToken = await supabaseAdmin
+    .from("orders")
+    .select("*")
+    .eq("access_token", id)
+    .maybeSingle();
 
-  await fs.writeFile(
-    ordersFile,
-    JSON.stringify(orders, null, 2),
-    "utf8"
-  );
-}
+  if (byToken.error) {
+    console.error("Supabase find order by token error:", byToken.error);
+    throw new Error("Не вдалося знайти замовлення");
+  }
 
-function isSameOrder(order: Order, id: string) {
-  return (
-    String(order.id || "") === id ||
-    String(order.accessToken || "") === id ||
-    String(order.orderNumber || "") === id
-  );
+  return byToken.data ? (byToken.data as DbOrder) : null;
 }
 
 export async function PATCH(
@@ -104,12 +133,9 @@ export async function PATCH(
       );
     }
 
-    const orders = await readOrders();
-    const orderIndex = orders.findIndex((order) =>
-      isSameOrder(order, id)
-    );
+    const currentOrder = await findOrder(id);
 
-    if (orderIndex === -1) {
+    if (!currentOrder) {
       return NextResponse.json(
         {
           success: false,
@@ -119,14 +145,13 @@ export async function PATCH(
       );
     }
 
-    const currentOrder = orders[orderIndex];
-    const total = Number(currentOrder.total || 0);
+    const total = Number(currentOrder.total ?? 0);
+    const now = new Date().toISOString();
 
-    const updatedOrder: Order = {
-      ...currentOrder,
+    const updateData: Record<string, unknown> = {
       status,
-      updatedAt: new Date().toISOString(),
-      statusUpdatedAt: new Date().toISOString(),
+      updated_at: now,
+      status_updated_at: now,
     };
 
     if (
@@ -134,17 +159,32 @@ export async function PATCH(
       Number.isFinite(paidAmount) &&
       paidAmount >= 0
     ) {
-      updatedOrder.paidAmount = paidAmount;
-      updatedOrder.amountDue = Math.max(total - paidAmount, 0);
+      updateData.paid_amount = paidAmount;
+      updateData.amount_due = Math.max(total - paidAmount, 0);
     }
 
-    orders[orderIndex] = updatedOrder;
+    const { data, error } = await supabaseAdmin
+      .from("orders")
+      .update(updateData)
+      .eq("id", currentOrder.id)
+      .select("*")
+      .single();
 
-    await saveOrders(orders);
+    if (error) {
+      console.error("Supabase update order error:", error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Не вдалося оновити замовлення",
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      order: updatedOrder,
+      order: toClientOrder(data as DbOrder),
     });
   } catch (error) {
     console.error("Помилка оновлення замовлення:", error);
@@ -152,7 +192,10 @@ export async function PATCH(
     return NextResponse.json(
       {
         success: false,
-        message: "Не вдалося оновити замовлення",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Не вдалося оновити замовлення",
       },
       { status: 500 }
     );

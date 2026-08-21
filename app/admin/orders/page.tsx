@@ -43,7 +43,8 @@ const statusLabels: Record<string, string> = {
   ready: "Готове",
   shipped: "Відправлено",
   completed: "Виконано",
-  canceled: "Скасовано",
+  canceled: "Відмова",
+  returned: "Повернення",
 };
 
 const statuses = [
@@ -56,6 +57,7 @@ const statuses = [
   "shipped",
   "completed",
   "canceled",
+  "returned",
 ];
 
 function formatMoney(value?: number) {
@@ -199,7 +201,8 @@ export default function AdminOrdersPage() {
     const active = orders.filter(
       (order) =>
         order.status !== "completed" &&
-        order.status !== "canceled"
+        order.status !== "canceled" &&
+        order.status !== "returned"
     ).length;
 
     return {

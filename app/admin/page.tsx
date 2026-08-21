@@ -16,6 +16,22 @@ type Product = {
   article: string;
   category: string;
   base: string;
+  productType?: "runner" | "rug" | "doormat";
+  pile?: "flat" | "medium" | "high";
+  rooms?: (
+    | "hallway"
+    | "corridor"
+    | "kitchen"
+    | "bedroom"
+    | "living-room"
+    | "children"
+    | "bathroom"
+    | "office"
+    | "balcony"
+    | "terrace"
+    | "outdoor"
+    | "commercial"
+  )[];
   collection: string;
   name: string;
   description: string;
@@ -32,6 +48,33 @@ type Product = {
 type CatalogCategory = { value: string; label: string; active: boolean };
 type CatalogBase = { value: string; label: string; category: string; active: boolean };
 type CatalogSettings = { categories: CatalogCategory[]; bases: CatalogBase[] };
+
+const productTypeOptions = [
+  { value: "runner", label: "Доріжка" },
+  { value: "rug", label: "Килим" },
+  { value: "doormat", label: "Придверний килимок" },
+] as const;
+
+const pileOptions = [
+  { value: "flat", label: "Безворсовий" },
+  { value: "medium", label: "Середній ворс" },
+  { value: "high", label: "Високий ворс" },
+] as const;
+
+const roomOptions = [
+  { value: "hallway", label: "Передпокій" },
+  { value: "corridor", label: "Коридор" },
+  { value: "kitchen", label: "Кухня" },
+  { value: "bedroom", label: "Спальня" },
+  { value: "living-room", label: "Вітальня" },
+  { value: "children", label: "Дитяча" },
+  { value: "bathroom", label: "Ванна кімната" },
+  { value: "office", label: "Офіс" },
+  { value: "balcony", label: "Балкон" },
+  { value: "terrace", label: "Тераса" },
+  { value: "outdoor", label: "Вулиця" },
+  { value: "commercial", label: "Комерційне приміщення" },
+] as const;
 
 const inputStyle = {
   width: "100%",
@@ -194,6 +237,10 @@ export default function AdminPage() {
   const [selectedBase, setSelectedBase] = useState("");
 
   const [message, setMessage] = useState("");
+  const [productSearch, setProductSearch] = useState("");
+  const [productFilter, setProductFilter] = useState<
+    "all" | "in-stock" | "out-of-stock" | "new" | "featured" | "no-photo"
+  >("all");
   const [isLoading, setIsLoading] = useState(false);
   const [isProductsLoading, setIsProductsLoading] =
     useState(true);
@@ -441,6 +488,134 @@ export default function AdminPage() {
       collectionValue
     );
 
+  function getCategoryLabel(categoryValue: string) {
+    return (
+      catalogSettings.categories.find(
+        (category) => category.value === categoryValue
+      )?.label ?? categoryValue
+    );
+  }
+
+  function getBaseLabel(categoryValue: string, baseValue: string) {
+    return (
+      catalogSettings.bases.find(
+        (base) =>
+          base.category === categoryValue &&
+          base.value === baseValue
+      )?.label ?? baseValue
+    );
+  }
+
+  const normalizedProductSearch = productSearch
+    .trim()
+    .toLowerCase();
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      !normalizedProductSearch ||
+      product.name?.toLowerCase().includes(normalizedProductSearch) ||
+      product.article?.toLowerCase().includes(normalizedProductSearch) ||
+      product.collection?.toLowerCase().includes(normalizedProductSearch);
+
+    if (!matchesSearch) {
+      return false;
+    }
+
+    if (productFilter === "in-stock") {
+      return product.inStock;
+    }
+
+    if (productFilter === "out-of-stock") {
+      return !product.inStock;
+    }
+
+    if (productFilter === "new") {
+      return product.new;
+    }
+
+    if (productFilter === "featured") {
+      return product.featured;
+    }
+
+    if (productFilter === "no-photo") {
+      return !Array.isArray(product.images) || product.images.length === 0;
+    }
+
+    return true;
+  });
+
+  const groupedProducts = activeCategories
+    .map((category) => {
+      const categoryProducts = filteredProducts.filter(
+        (product) => product.category === category.value
+      );
+
+      const configuredBases = catalogSettings.bases.filter(
+        (base) => base.category === category.value
+      );
+
+      const baseValues = Array.from(
+        new Set([
+          ...configuredBases.map((base) => base.value),
+          ...categoryProducts.map((product) => product.base),
+        ])
+      );
+
+      const bases = baseValues
+        .map((baseValue) => ({
+          value: baseValue,
+          label: getBaseLabel(category.value, baseValue),
+          products: categoryProducts.filter(
+            (product) => product.base === baseValue
+          ),
+        }))
+        .filter((base) => base.products.length > 0);
+
+      return {
+        value: category.value,
+        label: getCategoryLabel(category.value),
+        productsCount: categoryProducts.length,
+        bases,
+      };
+    });
+
+  const knownCategoryValues = new Set(
+    activeCategories.map((category) => category.value)
+  );
+
+  const uncategorizedProducts = filteredProducts.filter(
+    (product) => !knownCategoryValues.has(product.category)
+  );
+
+  if (uncategorizedProducts.length > 0) {
+    const unknownCategoryValues = Array.from(
+      new Set(uncategorizedProducts.map((product) => product.category))
+    );
+
+    unknownCategoryValues.forEach((categoryValue) => {
+      const categoryProducts = uncategorizedProducts.filter(
+        (product) => product.category === categoryValue
+      );
+
+      const baseValues = Array.from(
+        new Set(categoryProducts.map((product) => product.base))
+      );
+
+      groupedProducts.push({
+        value: categoryValue,
+        label: getCategoryLabel(categoryValue),
+        productsCount: categoryProducts.length,
+        bases: baseValues.map((baseValue) => ({
+          value: baseValue,
+          label: getBaseLabel(categoryValue, baseValue),
+          products: categoryProducts.filter(
+            (product) => product.base === baseValue
+          ),
+        })),
+      });
+    });
+  }
+
   return (
     <main
       style={{
@@ -653,6 +828,16 @@ export default function AdminPage() {
                 <strong style={adminTitleStyle}>Клієнти</strong>
                 <small style={adminTextStyle}>
                   Контакти та історія замовлень
+                </small>
+              </span>
+            </Link>
+
+            <Link href="/admin/crm" style={adminCardStyle}>
+              <span style={adminIconStyle}>📊</span>
+              <span>
+                <strong style={adminTitleStyle}>CRM</strong>
+                <small style={adminTextStyle}>
+                  Продажі, клієнти, товари та аналітика
                 </small>
               </span>
             </Link>
@@ -893,6 +1078,114 @@ export default function AdminPage() {
                   Для цієї категорії немає активних основ. Додайте їх у розділі «Категорії».
                 </p>
               )}
+            </div>
+
+            <div>
+              <label>Тип товару</label>
+
+              <select
+                name="productType"
+                defaultValue={
+                  editingProduct?.productType ?? "runner"
+                }
+                style={inputStyle}
+              >
+                {productTypeOptions.map((option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label>Тип ворсу</label>
+
+              <select
+                name="pile"
+                defaultValue={
+                  editingProduct?.pile ?? "flat"
+                }
+                style={inputStyle}
+              >
+                {pileOptions.map((option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "10px",
+                  fontWeight: 700,
+                }}
+              >
+                Куди підходить цей килим
+              </label>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit, minmax(190px, 1fr))",
+                  gap: "10px",
+                  padding: "15px",
+                  border: "1px solid #dddddd",
+                  borderRadius: "12px",
+                  background: "#f8f6f2",
+                }}
+              >
+                {roomOptions.map((room) => (
+                  <label
+                    key={room.value}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "9px",
+                      minHeight: "42px",
+                      padding: "8px 10px",
+                      borderRadius: "9px",
+                      background: "#ffffff",
+                      border: "1px solid #e5e0d8",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      name="rooms"
+                      value={room.value}
+                      defaultChecked={
+                        editingProduct?.rooms?.includes(
+                          room.value
+                        ) ?? false
+                      }
+                    />
+
+                    <span>{room.label}</span>
+                  </label>
+                ))}
+              </div>
+
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  color: "#777067",
+                  fontSize: "12px",
+                  lineHeight: 1.4,
+                }}
+              >
+                Можна вибрати одразу кілька варіантів.
+              </p>
             </div>
 
             <div>
@@ -1188,18 +1481,135 @@ export default function AdminPage() {
             </button>
           </div>
 
+          <div
+            style={{
+              display: "grid",
+              gap: "12px",
+              marginBottom: "22px",
+              padding: "16px",
+              borderRadius: "16px",
+              background: "#f6f2ec",
+              border: "1px solid #e2d8ca",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "minmax(220px, 1fr) auto",
+                gap: "12px",
+                alignItems: "center",
+              }}
+            >
+              <input
+                type="search"
+                value={productSearch}
+                onChange={(event) =>
+                  setProductSearch(event.target.value)
+                }
+                placeholder="🔎 Пошук за назвою, артикулом або колекцією"
+                style={{
+                  ...inputStyle,
+                  background: "#ffffff",
+                }}
+              />
+
+              {(productSearch || productFilter !== "all") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProductSearch("");
+                    setProductFilter("all");
+                  }}
+                  style={{
+                    ...buttonStyle,
+                    background: "#ded6ca",
+                    color: "#171717",
+                  }}
+                >
+                  Очистити
+                </button>
+              )}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              {[
+                { value: "all", label: "Усі" },
+                { value: "in-stock", label: "У наявності" },
+                { value: "out-of-stock", label: "Немає в наявності" },
+                { value: "new", label: "Новинки" },
+                { value: "featured", label: "Рекомендовані" },
+                { value: "no-photo", label: "Без фото" },
+              ].map((filter) => {
+                const active = productFilter === filter.value;
+
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    onClick={() =>
+                      setProductFilter(
+                        filter.value as typeof productFilter
+                      )
+                    }
+                    style={{
+                      ...buttonStyle,
+                      padding: "9px 12px",
+                      background: active ? "#181714" : "#ffffff",
+                      color: active ? "#ffffff" : "#171717",
+                      border: active
+                        ? "1px solid #181714"
+                        : "1px solid #d8cdbd",
+                    }}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                color: "#6f685f",
+                fontSize: "13px",
+                fontWeight: 700,
+              }}
+            >
+              Знайдено товарів: {filteredProducts.length}
+            </div>
+          </div>
+
           {isProductsLoading ? (
             <p>Завантаження товарів...</p>
           ) : products.length === 0 ? (
             <p>Товарів поки що немає.</p>
-          ) : (
+          ) : filteredProducts.length === 0 ? (
+            <div
+              style={{
+                padding: "28px",
+                borderRadius: "16px",
+                background: "#f8f5f0",
+                border: "1px dashed #c9bda9",
+                textAlign: "center",
+                fontWeight: 800,
+                color: "#6f685f",
+              }}
+            >
+              За цим пошуком або фільтром товарів не знайдено.
+            </div>
+          ) : productSearch.trim() || productFilter !== "all" ? (
             <div
               style={{
                 display: "grid",
-                gap: "15px",
+                gap: "12px",
               }}
             >
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <article
                   key={product.id}
                   style={{
@@ -1211,6 +1621,7 @@ export default function AdminPage() {
                     padding: "15px",
                     border: "1px solid #e0e0e0",
                     borderRadius: "14px",
+                    background: "#ffffff",
                   }}
                 >
                   <div
@@ -1269,6 +1680,27 @@ export default function AdminPage() {
                       Артикул: {product.article}
                     </p>
 
+                    <p
+                      style={{
+                        margin: "0 0 5px",
+                        color: "#777067",
+                        fontSize: "13px",
+                      }}
+                    >
+                      Колекція: {product.collection || "—"}
+                    </p>
+
+                    <p
+                      style={{
+                        margin: "0 0 5px",
+                        color: "#777067",
+                        fontSize: "13px",
+                      }}
+                    >
+                      {getCategoryLabel(product.category)} →{" "}
+                      {getBaseLabel(product.category, product.base)}
+                    </p>
+
                     <strong>{product.price} грн / м²</strong>
                   </div>
 
@@ -1282,9 +1714,7 @@ export default function AdminPage() {
                   >
                     <button
                       type="button"
-                      onClick={() =>
-                        startEditing(product)
-                      }
+                      onClick={() => startEditing(product)}
                       style={{
                         ...buttonStyle,
                         background: "#c29a65",
@@ -1309,6 +1739,246 @@ export default function AdminPage() {
                     </button>
                   </div>
                 </article>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gap: "22px",
+              }}
+            >
+              {groupedProducts.map((category) => (
+                <details
+                  key={category.value}
+                  style={{
+                    overflow: "hidden",
+                    border: "1px solid #ded6ca",
+                    borderRadius: "18px",
+                    background: "#f8f5f0",
+                  }}
+                >
+                  <summary
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "18px 20px",
+                      background: "#181714",
+                      color: "#ffffff",
+                      cursor: "pointer",
+                      listStyle: "none",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "23px",
+                          fontWeight: 900,
+                        }}
+                      >
+                        {category.label}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: "4px",
+                          color: "#d9d1c7",
+                          fontSize: "13px",
+                        }}
+                      >
+                        Категорія: {category.value}
+                      </div>
+                    </div>
+
+                    <strong
+                      style={{
+                        padding: "7px 11px",
+                        borderRadius: "999px",
+                        background: "#d4af37",
+                        color: "#111111",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {category.productsCount} товарів
+                    </strong>
+                  </summary>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "16px",
+                      padding: "16px",
+                    }}
+                  >
+                    {category.bases.map((base) => (
+                      <details
+                        key={`${category.value}-${base.value}`}
+                        style={{
+                          overflow: "hidden",
+                          border: "1px solid #e0d8cc",
+                          borderRadius: "14px",
+                          background: "#ffffff",
+                        }}
+                      >
+                        <summary
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "15px 17px",
+                            cursor: "pointer",
+                            background: "#eee5d7",
+                            fontWeight: 900,
+                            listStyle: "none",
+                          }}
+                        >
+                          <span>Основа: {base.label}</span>
+                          <span
+                            style={{
+                              padding: "5px 9px",
+                              borderRadius: "999px",
+                              background: "#ffffff",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {base.products.length} шт.
+                          </span>
+                        </summary>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: "12px",
+                            padding: "14px",
+                          }}
+                        >
+                          {base.products.map((product) => (
+                            <article
+                              key={product.id}
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "100px minmax(180px, 1fr) auto",
+                                gap: "18px",
+                                alignItems: "center",
+                                padding: "15px",
+                                border: "1px solid #e0e0e0",
+                                borderRadius: "14px",
+                                background: "#ffffff",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  position: "relative",
+                                  width: "100px",
+                                  height: "100px",
+                                  borderRadius: "11px",
+                                  overflow: "hidden",
+                                  background: "#eeeeee",
+                                }}
+                              >
+                                {product.images?.[0] ? (
+                                  <Image
+                                    src={product.images[0]}
+                                    alt={product.name}
+                                    fill
+                                    sizes="100px"
+                                    style={{
+                                      objectFit: "cover",
+                                    }}
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      height: "100%",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      textAlign: "center",
+                                      fontSize: "12px",
+                                      color: "#777777",
+                                    }}
+                                  >
+                                    Немає фото
+                                  </div>
+                                )}
+                              </div>
+
+                              <div>
+                                <h3
+                                  style={{
+                                    margin: "0 0 7px",
+                                    fontSize: "21px",
+                                  }}
+                                >
+                                  {product.name}
+                                </h3>
+
+                                <p
+                                  style={{
+                                    margin: "0 0 5px",
+                                    color: "#666666",
+                                  }}
+                                >
+                                  Артикул: {product.article}
+                                </p>
+
+                                <p
+                                  style={{
+                                    margin: "0 0 5px",
+                                    color: "#777067",
+                                    fontSize: "13px",
+                                  }}
+                                >
+                                  Колекція: {product.collection || "—"}
+                                </p>
+
+                                <strong>{product.price} грн / м²</strong>
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "9px",
+                                  flexWrap: "wrap",
+                                  justifyContent: "flex-end",
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => startEditing(product)}
+                                  style={{
+                                    ...buttonStyle,
+                                    background: "#c29a65",
+                                    color: "#ffffff",
+                                  }}
+                                >
+                                  Редагувати
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    void deleteProduct(product)
+                                  }
+                                  style={{
+                                    ...buttonStyle,
+                                    background: "#b42323",
+                                    color: "#ffffff",
+                                  }}
+                                >
+                                  Видалити
+                                </button>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </details>
               ))}
             </div>
           )}

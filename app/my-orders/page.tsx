@@ -43,6 +43,7 @@ const statusLabels: Record<string, string> = {
   shipped: "Відправлено",
   completed: "Виконано",
   canceled: "Скасовано",
+  returned: "Повернення",
 };
 
 const statusSteps = [
@@ -139,10 +140,31 @@ function getStepIndex(status?: string) {
   return index;
 }
 
+function getPaymentLabel(value?: string) {
+  const labels: Record<string, string> = {
+    cod: "Накладений платіж",
+    prepayment: "Передоплата 200 грн",
+    "full-payment": "Повна оплата",
+  };
+
+  return value ? labels[value] || value : "—";
+}
+
+function getDeliveryLabel(value?: string) {
+  const labels: Record<string, string> = {
+    nova_poshta: "Нова пошта",
+    "nova-poshta": "Нова пошта",
+    pickup: "Самовивіз",
+  };
+
+  return value ? labels[value] || value : "—";
+}
+
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasTokens, setHasTokens] = useState(false);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
 
   async function loadOrders() {
     setIsLoading(true);
@@ -287,6 +309,41 @@ export default function MyOrdersPage() {
                     </div>
                   </div>
 
+                  <button
+                    type="button"
+                    className="details-button"
+                    onClick={() => {
+                      const key = String(
+                        order.accessToken ||
+                          order.id ||
+                          order.orderNumber ||
+                          ""
+                      );
+
+                      setExpandedOrder((current) =>
+                        current === key ? null : key
+                      );
+                    }}
+                  >
+                    {expandedOrder ===
+                    String(
+                      order.accessToken ||
+                        order.id ||
+                        order.orderNumber ||
+                        ""
+                    )
+                      ? "Сховати деталі ▲"
+                      : "Деталі замовлення ▼"}
+                  </button>
+
+                  {expandedOrder ===
+                    String(
+                      order.accessToken ||
+                        order.id ||
+                        order.orderNumber ||
+                        ""
+                    ) && (
+                    <div className="details">
                   <div className="progress">
                     {statusSteps.map((step, index) => (
                       <div
@@ -319,7 +376,7 @@ export default function MyOrdersPage() {
                     <div>
                       <span>Доставка</span>
                       <strong>
-                        {order.delivery || "—"}
+                        {getDeliveryLabel(order.delivery)}
                       </strong>
                     </div>
 
@@ -338,7 +395,7 @@ export default function MyOrdersPage() {
                     <div>
                       <span>Оплата</span>
                       <strong>
-                        {order.paymentMethod || "—"}
+                        {getPaymentLabel(order.paymentMethod)}
                       </strong>
                     </div>
                   </div>
@@ -396,6 +453,8 @@ export default function MyOrdersPage() {
                       <p>Товари не вказані</p>
                     )}
                   </div>
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -544,6 +603,39 @@ export default function MyOrdersPage() {
           padding: 12px 16px;
           font-weight: 900;
           white-space: nowrap;
+        }
+
+        .details-button {
+          width: 100%;
+          min-height: 48px;
+          margin-bottom: 18px;
+          border: 1px solid #171717;
+          border-radius: 14px;
+          background: #171717;
+          color: #ffd95a;
+          font: inherit;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .details-button:hover {
+          background: #2a2926;
+        }
+
+        .details {
+          animation: detailsOpen 0.18s ease-out;
+        }
+
+        @keyframes detailsOpen {
+          from {
+            opacity: 0;
+            transform: translateY(-5px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .progress {

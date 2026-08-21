@@ -857,6 +857,218 @@ export default function HomePage() {
         .assistant-content > div > p:last-child { max-width: 650px; margin: 0; color: #e4d6c1; line-height: 1.6; }
         .assistant-cta-button { display: inline-flex; min-height: 58px; align-items: center; justify-content: center; padding: 0 24px; border-radius: 15px; background: linear-gradient(135deg,#d4af37,#ffd95a); color: #111; text-decoration: none; font-weight: 900; white-space: nowrap; box-shadow: 0 16px 36px rgba(212,175,55,.32); }
 
+/* ===== КНОПКИ "ЩО ВАМ ПОТРІБНО?" ===== */
+
+.choice-grid :global(.choice-card) {
+  position: relative;
+  display: block;
+  min-height: 200px;
+  padding: 26px;
+  border-radius: 26px;
+
+  background: #fff2dc !important;
+  border: 2px solid #b9892b !important;
+
+  color: #171717 !important;
+  text-decoration: none !important;
+
+  box-shadow: 0 18px 45px rgba(40, 30, 15, 0.14);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.choice-grid :global(.choice-card)::after {
+  content: "→";
+  position: absolute;
+  right: 24px;
+  bottom: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  background: #171717;
+  color: #ffffff;
+
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.choice-grid :global(.choice-card:hover) {
+  transform: translateY(-5px);
+
+  border-color: #d4af37 !important;
+
+  box-shadow:
+    0 24px 55px rgba(40, 30, 15, 0.22);
+}
+
+.choice-grid :global(.choice-card span) {
+  display: block;
+  margin-bottom: 16px;
+
+  font-size: 44px;
+}
+
+.choice-grid :global(.choice-card h3) {
+  margin: 0 0 10px;
+
+  color: #171717 !important;
+
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.choice-grid :global(.choice-card p) {
+  max-width: 80%;
+  margin: 0;
+
+  color: #5e5245 !important;
+
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* AI — золота кнопка */
+
+.choice-grid :global(.choice-card.dark) {
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(255, 255, 255, 0.3),
+      transparent 40%
+    ),
+    linear-gradient(
+      135deg,
+      #d4af37,
+      #ffd95a
+    ) !important;
+
+  border-color: #ffe27a !important;
+
+  color: #111111 !important;
+
+  box-shadow:
+    0 20px 50px rgba(212, 175, 55, 0.32);
+}
+
+.choice-grid :global(.choice-card.dark h3) {
+  color: #111111 !important;
+}
+
+.choice-grid :global(.choice-card.dark p) {
+  color: #47370c !important;
+}
+
+.choice-grid :global(.choice-card.dark)::after {
+  background: #111111;
+  color: #ffd95a;
+}
+
+
+/* ===== КНОПКИ КАТЕГОРІЙ ===== */
+
+.category-grid :global(a) {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  min-height: 100px;
+  padding: 20px 22px;
+
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #171717,
+      #2b2419
+    ) !important;
+
+  border: 1px solid #d4af37 !important;
+
+  color: #ffffff !important;
+  text-decoration: none !important;
+
+  font-size: 20px;
+  font-weight: 900;
+
+  box-shadow:
+    0 18px 40px rgba(20, 15, 8, 0.2);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.category-grid :global(a)::after {
+  content: "→";
+
+  color: #ffd95a;
+
+  font-size: 25px;
+  font-weight: 900;
+}
+
+.category-grid :global(a:hover) {
+  transform: translateY(-4px);
+
+  background:
+    linear-gradient(
+      135deg,
+      #211b12,
+      #3a2e18
+    ) !important;
+
+  box-shadow:
+    0 24px 50px rgba(20, 15, 8, 0.28);
+}
+
+
+/* ===== "ВЕСЬ КАТАЛОГ" ===== */
+
+.section-title :global(a) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 46px;
+
+  padding: 0 18px;
+
+  border-radius: 12px;
+
+  background: #171717;
+
+  color: #ffffff !important;
+  text-decoration: none !important;
+
+  font-size: 15px;
+  font-weight: 900;
+
+  border: 1px solid #d4af37;
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.section-title :global(a:hover) {
+  transform: translateY(-2px);
+  background: #2a241b;
+}
+
         @media (max-width: 950px) {
           .choice-grid,
           .calculator-section,
@@ -877,31 +1089,251 @@ export default function HomePage() {
         }
 
         @media (max-width: 600px) {
+          .page {
+            overflow-x: hidden;
+            padding-bottom: 48px;
+          }
+
+          .hero,
+          .choice-section,
+          .category-section,
+          .calculator-section,
+          .products-section,
+          .reviews-section,
+          .why-section,
+          .assistant-cta {
+            padding-left: 14px;
+            padding-right: 14px;
+          }
+
+          .hero {
+            padding-top: 24px;
+            padding-bottom: 18px;
+          }
+
           .hero-box {
-            padding: 42px 20px;
+            padding: 36px 16px;
+            border-radius: 24px;
+          }
+
+          .hero-box::before {
+            inset: 10px;
+            border-radius: 18px;
           }
 
           h1 {
+            font-size: clamp(34px, 11vw, 48px);
+            line-height: 1.02;
             letter-spacing: -1px;
+          }
+
+          .hero-text {
+            margin-top: 16px;
+            font-size: 16px;
+            line-height: 1.5;
+          }
+
+          .hero-box :global(a) {
+            width: 100% !important;
+            max-width: none !important;
+          }
+
+          .hero-box :global(a:first-of-type) {
+            min-height: 62px !important;
+            padding: 0 18px !important;
+            border-radius: 16px !important;
+            font-size: 20px !important;
+          }
+
+          .hero-box :global(a:last-of-type) {
+            min-height: 50px !important;
+            padding: 0 16px !important;
+            font-size: 15px !important;
+          }
+
+          .choice-section,
+          .category-section,
+          .calculator-section,
+          .products-section,
+          .reviews-section,
+          .why-section,
+          .assistant-cta {
+            padding-top: 22px;
+            padding-bottom: 22px;
+          }
+
+          h2 {
+            font-size: clamp(28px, 9vw, 38px);
+            margin-bottom: 16px;
           }
 
           .section-title {
             align-items: flex-start;
             flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
           }
 
+          .section-title :global(a) {
+            width: 100%;
+            box-sizing: border-box;
+          }
+
+          .choice-grid,
           .category-grid,
           .why-grid,
-          .reviews-grid {
+          .reviews-grid,
+          .products-grid {
             grid-template-columns: 1fr;
           }
 
-          .assistant-content {
-            padding: 24px 20px;
+          .choice-grid :global(.choice-card) {
+            min-height: 170px;
+            padding: 20px;
+            border-radius: 20px;
+          }
+
+          .choice-grid :global(.choice-card span) {
+            font-size: 36px;
+            margin-bottom: 12px;
+          }
+
+          .choice-grid :global(.choice-card h3) {
+            font-size: 22px;
+          }
+
+          .choice-grid :global(.choice-card p) {
+            max-width: calc(100% - 50px);
+            font-size: 15px;
+          }
+
+          .choice-grid :global(.choice-card)::after {
+            right: 18px;
+            bottom: 18px;
+            width: 38px;
+            height: 38px;
+            font-size: 20px;
+          }
+
+          .category-grid :global(a) {
+            min-height: 76px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            font-size: 18px;
+          }
+
+          .calculator-section {
+            gap: 14px;
+          }
+
+          .calculator-text {
+            padding: 22px 18px;
+            border-radius: 20px;
+          }
+
+          .calculator-text p {
+            font-size: 16px;
+          }
+
+          .calculator-card {
+            padding: 18px;
+            border-radius: 20px;
           }
 
           .inputs {
             grid-template-columns: 1fr;
+          }
+
+          input,
+          select {
+            min-height: 50px;
+            font-size: 16px;
+          }
+
+          .total {
+            align-items: flex-start;
+            flex-direction: column;
+          }
+
+          .total strong {
+            font-size: 24px;
+          }
+
+          .product-card {
+            border-radius: 20px;
+          }
+
+          .product-image {
+            height: 230px;
+          }
+
+          .product-info {
+            padding: 14px;
+          }
+
+          .product-info h3,
+          .product-info strong {
+            font-size: 20px;
+          }
+
+          .review-card,
+          .why-card {
+            min-height: auto;
+            padding: 20px;
+            border-radius: 20px;
+          }
+
+          .review-card > p {
+            font-size: 16px;
+          }
+
+          .assistant-content {
+            padding: 22px 18px;
+            border-radius: 22px;
+            gap: 16px;
+          }
+
+          .assistant-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            font-size: 30px;
+          }
+
+          .assistant-content h2 {
+            font-size: 30px;
+          }
+
+          .assistant-cta-button {
+            min-height: 52px;
+            padding: 0 18px;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .hero-box {
+            padding: 30px 14px;
+          }
+
+          h1 {
+            font-size: 32px;
+          }
+
+          .hero-text {
+            font-size: 15px;
+          }
+
+          .hero-box :global(a:first-of-type) {
+            font-size: 18px !important;
+          }
+
+          .choice-grid :global(.choice-card p) {
+            max-width: 100%;
+            padding-right: 42px;
+          }
+
+          .product-image {
+            height: 205px;
           }
         }
       `}</style>

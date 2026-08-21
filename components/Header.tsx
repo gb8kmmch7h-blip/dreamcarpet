@@ -46,19 +46,10 @@ export default function Header() {
         <Link
           href="/"
           onClick={closeMenu}
-          style={{
-            color: "#ffffff",
-            textDecoration: "none",
-            fontSize: "34px",
-            fontWeight: 900,
-            lineHeight: 1,
-            whiteSpace: "nowrap",
-          }}
+          className="logo"
         >
           Dream
-          <span style={{ color: "#d4af37" }}>
-            Carpet
-          </span>
+          <span>Carpet</span>
         </Link>
 
         <nav className="desktop-nav">
@@ -66,24 +57,36 @@ export default function Header() {
           <Link href="/catalog">📦 Каталог</Link>
           <Link href="/assistant">🤖 Підібрати</Link>
           <Link href="/care">🧼 Догляд</Link>
-          <Link href="/my-orders">📋 Мої замовлення</Link>
+          <Link href="/my-orders">
+            📋 Мої замовлення
+          </Link>
           <Link href="/contacts">☎ Контакти</Link>
         </nav>
 
         <div className="desktop-actions">
-          <Link href="/search" className="action dark">
+          <Link
+            href="/search"
+            className="action dark"
+          >
             🔍 Пошук
           </Link>
 
-          <Link href="/favorites" className="action dark">
+          <Link
+            href="/favorites"
+            className="action dark"
+          >
             <span>❤️ Вибрані</span>
 
-            {isFavoritesLoaded && favoritesCount > 0 && (
-              <strong>{favoritesCount}</strong>
-            )}
+            {isFavoritesLoaded &&
+              favoritesCount > 0 && (
+                <strong>{favoritesCount}</strong>
+              )}
           </Link>
 
-          <Link href="/cart" className="action gold">
+          <Link
+            href="/cart"
+            className="action gold"
+          >
             <span>🛒 Кошик</span>
 
             {isCartLoaded && totalItems > 0 && (
@@ -94,20 +97,10 @@ export default function Header() {
 
         <button
           type="button"
-          onClick={() => setIsOpen((current) => !current)}
+          onClick={() =>
+            setIsOpen((current) => !current)
+          }
           aria-label="Меню"
-          style={{
-            display: "none",
-            width: "48px",
-            height: "48px",
-            borderRadius: "14px",
-            border: "1px solid #d4af37",
-            background: "#1f1f1f",
-            color: "#ffffff",
-            fontSize: "28px",
-            fontWeight: 900,
-            cursor: "pointer",
-          }}
           className="burger"
         >
           {isOpen ? "✕" : "☰"}
@@ -115,56 +108,83 @@ export default function Header() {
       </div>
 
       {isOpen && (
-        <div
-          className="mobile-menu"
-          style={{
-            display: "grid",
-            gap: "10px",
-            padding: "14px 16px 18px",
-            background: "#111111",
-            borderTop: "1px solid #2b2b2b",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.35)",
-          }}
-        >
-          <Link href="/" onClick={closeMenu} style={mobileLinkStyle}>
+        <div className="mobile-menu">
+          <Link
+            href="/"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             🏠 Головна
           </Link>
 
-          <Link href="/catalog" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/catalog"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             📦 Каталог
           </Link>
 
-          <Link href="/search" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/search"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             🔍 Пошук
           </Link>
 
-          <Link href="/assistant" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/assistant"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             🤖 Підібрати килим
           </Link>
 
-          <Link href="/favorites" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/favorites"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             ❤️ Вибрані{" "}
-            {isFavoritesLoaded && favoritesCount > 0
+            {isFavoritesLoaded &&
+            favoritesCount > 0
               ? `(${favoritesCount})`
               : ""}
           </Link>
 
-          <Link href="/cart" onClick={closeMenu} style={mobileGoldStyle}>
+          <Link
+            href="/cart"
+            onClick={closeMenu}
+            style={mobileGoldStyle}
+          >
             🛒 Кошик{" "}
             {isCartLoaded && totalItems > 0
               ? `(${totalItems})`
               : ""}
           </Link>
 
-          <Link href="/my-orders" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/my-orders"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             📋 Мої замовлення
           </Link>
 
-          <Link href="/care" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/care"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             🧼 Догляд
           </Link>
 
-          <Link href="/contacts" onClick={closeMenu} style={mobileLinkStyle}>
+          <Link
+            href="/contacts"
+            onClick={closeMenu}
+            style={mobileLinkStyle}
+          >
             ☎ Контакти
           </Link>
         </div>
@@ -183,10 +203,24 @@ export default function Header() {
           max-width: 1400px;
           margin: 0 auto;
           padding: 18px 30px;
+
           display: grid;
           grid-template-columns: auto 1fr auto;
           align-items: center;
           gap: 24px;
+        }
+
+        :global(.logo) {
+          color: #ffffff !important;
+          text-decoration: none !important;
+          font-size: 34px;
+          font-weight: 900;
+          line-height: 1;
+          white-space: nowrap;
+        }
+
+        :global(.logo span) {
+          color: #d4af37 !important;
         }
 
         .desktop-nav {
@@ -197,12 +231,20 @@ export default function Header() {
           flex-wrap: wrap;
         }
 
-        .desktop-nav a {
-          color: #ffffff;
-          text-decoration: none;
+        .desktop-nav :global(a) {
+          color: #ffffff !important;
+          text-decoration: none !important;
           font-size: 15px;
           font-weight: 800;
           white-space: nowrap;
+          opacity: 1 !important;
+          transition:
+            color 0.2s ease,
+            opacity 0.2s ease;
+        }
+
+        .desktop-nav :global(a:hover) {
+          color: #d4af37 !important;
         }
 
         .desktop-actions {
@@ -213,7 +255,7 @@ export default function Header() {
           flex-wrap: wrap;
         }
 
-        .action {
+        :global(.action) {
           min-height: 42px;
           display: inline-flex;
           align-items: center;
@@ -221,46 +263,107 @@ export default function Header() {
           gap: 8px;
           padding: 10px 14px;
           border-radius: 10px;
-          text-decoration: none;
+
+          text-decoration: none !important;
           font-size: 16px;
           font-weight: 900;
           white-space: nowrap;
+
+          opacity: 1 !important;
+
+          transition:
+            transform 0.2s ease,
+            background 0.2s ease;
         }
 
-        .action.dark {
-          background: #1f1f1f;
-          color: #ffffff;
-          border: 1px solid #333333;
+        :global(.action:hover) {
+          transform: translateY(-1px);
         }
 
-        .action.gold {
-          background: #d4af37;
-          color: #111111;
+        :global(.action.dark) {
+          background: #1f1f1f !important;
+          color: #ffffff !important;
+          border: 1px solid #444444;
+        }
+
+        :global(.action.dark span) {
+          color: #ffffff !important;
+        }
+
+        :global(.action.dark:hover) {
+          background: #292929 !important;
+        }
+
+        :global(.action.gold) {
+          background: #d4af37 !important;
+          color: #111111 !important;
           border: 1px solid #d4af37;
         }
 
-        .action strong {
+        :global(.action.gold span) {
+          color: #111111 !important;
+        }
+
+        :global(.action.gold:hover) {
+          background: #e2bd42 !important;
+        }
+
+        :global(.action strong) {
           min-width: 22px;
           height: 22px;
           padding: 0 7px;
+
           border-radius: 999px;
           background: #d4af37;
           color: #111111;
+
           display: inline-flex;
           align-items: center;
           justify-content: center;
+
           font-size: 13px;
           font-weight: 900;
         }
 
-        .action.gold strong {
+        :global(.action.gold strong) {
           background: #111111;
           color: #ffffff;
+        }
+
+        .burger {
+          display: none;
+
+          width: 48px;
+          height: 48px;
+
+          border-radius: 14px;
+          border: 1px solid #d4af37;
+
+          background: #1f1f1f;
+          color: #ffffff;
+
+          font-size: 28px;
+          font-weight: 900;
+          cursor: pointer;
+        }
+
+        .mobile-menu {
+          display: grid;
+          gap: 10px;
+
+          padding: 14px 16px 18px;
+
+          background: #111111;
+          border-top: 1px solid #2b2b2b;
+
+          box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.35);
         }
 
         @media (max-width: 1050px) {
           .inner {
             padding: 14px 16px;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -273,7 +376,7 @@ export default function Header() {
           }
 
           .burger {
-            display: inline-flex !important;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
@@ -281,7 +384,7 @@ export default function Header() {
         }
 
         @media (max-width: 600px) {
-          .inner a {
+          :global(.logo) {
             font-size: 28px !important;
           }
         }
