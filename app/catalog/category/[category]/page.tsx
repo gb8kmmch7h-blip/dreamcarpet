@@ -2,55 +2,15 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import fs from "fs/promises";
-import path from "path";
-
 import CategoryProductsClient from "./CategoryProductsClient";
 import { getAllProducts } from "../../../../lib/getAllProducts";
+import { getCatalogSettings } from "../../../../lib/getCatalogSettings";
 
 export const dynamic = "force-dynamic";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
   "http://localhost:3000";
-
-type CatalogCategory = {
-  value: string;
-  label: string;
-  active: boolean;
-};
-
-type CatalogBase = {
-  value: string;
-  label: string;
-  category: string;
-  active: boolean;
-};
-
-type CatalogSettings = {
-  categories: CatalogCategory[];
-  bases: CatalogBase[];
-};
-
-const settingsFile = path.join(
-  process.cwd(),
-  "database",
-  "catalog-settings.json"
-);
-
-async function getCatalogSettings(): Promise<CatalogSettings> {
-  try {
-    const content = await fs.readFile(settingsFile, "utf8");
-    const data = JSON.parse(content) as CatalogSettings;
-
-    return {
-      categories: Array.isArray(data.categories) ? data.categories : [],
-      bases: Array.isArray(data.bases) ? data.bases : [],
-    };
-  } catch {
-    return { categories: [], bases: [] };
-  }
-}
 
 const baseImages: Record<string, string> = {
   felt: "/images/subcategories/felt.jpg.png",

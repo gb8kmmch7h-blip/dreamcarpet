@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
+
 import { notFound } from "next/navigation";
-import fs from "fs/promises";
-import path from "path";
 
 import CategoryProductsClient from "../CategoryProductsClient";
+
 import { getAllProducts } from "../../../../../lib/getAllProducts";
+import { getCatalogSettings } from "../../../../../lib/getCatalogSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -12,57 +13,12 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
   "http://localhost:3000";
 
-type CatalogCategory = {
-  value: string;
-  label: string;
-  active: boolean;
-};
-
-type CatalogBase = {
-  value: string;
-  label: string;
-  category: string;
-  active: boolean;
-};
-
-type CatalogSettings = {
-  categories: CatalogCategory[];
-  bases: CatalogBase[];
-};
-
 type SubcategoryPageProps = {
   params: Promise<{
     category: string;
     subcategory: string;
   }>;
 };
-
-const settingsFile = path.join(
-  process.cwd(),
-  "database",
-  "catalog-settings.json"
-);
-
-async function getCatalogSettings(): Promise<CatalogSettings> {
-  try {
-    const content = await fs.readFile(settingsFile, "utf8");
-    const data = JSON.parse(content) as CatalogSettings;
-
-    return {
-      categories: Array.isArray(data.categories)
-        ? data.categories
-        : [],
-      bases: Array.isArray(data.bases)
-        ? data.bases
-        : [],
-    };
-  } catch {
-    return {
-      categories: [],
-      bases: [],
-    };
-  }
-}
 
 const baseSeo: Record<
   string,
@@ -167,7 +123,10 @@ function createBreadcrumbJsonLd(
         "@type": "ListItem",
         position: 4,
         name: subcategoryLabel,
-        item: getSubcategoryUrl(category, subcategory),
+        item: getSubcategoryUrl(
+          category,
+          subcategory
+        ),
       },
     ],
   };
@@ -185,7 +144,10 @@ function createCollectionJsonLd(
     "@type": "CollectionPage",
     name: title,
     description,
-    url: getSubcategoryUrl(category, subcategory),
+    url: getSubcategoryUrl(
+      category,
+      subcategory
+    ),
     isPartOf: {
       "@type": "WebSite",
       name: "DreamCarpet",
@@ -201,26 +163,31 @@ function createCollectionJsonLd(
 export async function generateMetadata({
   params,
 }: SubcategoryPageProps): Promise<Metadata> {
-  const { category, subcategory } = await params;
+  const { category, subcategory } =
+    await params;
 
-  const settings = await getCatalogSettings();
+  const settings =
+    await getCatalogSettings();
 
-  const categoryData = settings.categories.find(
-    (item) =>
-      item.value === category &&
-      item.active
-  );
+  const categoryData =
+    settings.categories.find(
+      (item) =>
+        item.value === category &&
+        item.active
+    );
 
-  const baseData = settings.bases.find(
-    (item) =>
-      item.value === subcategory &&
-      item.category === category &&
-      item.active
-  );
+  const baseData =
+    settings.bases.find(
+      (item) =>
+        item.value === subcategory &&
+        item.category === category &&
+        item.active
+    );
 
   if (!categoryData || !baseData) {
     return {
-      title: "Розділ не знайдено | DreamCarpet",
+      title:
+        "Розділ не знайдено | DreamCarpet",
       description:
         "На жаль, такого розділу немає в каталозі DreamCarpet.",
     };
@@ -228,7 +195,8 @@ export async function generateMetadata({
 
   const seo = baseSeo[subcategory];
 
-  const title = `${categoryData.label}: ${baseData.label} | DreamCarpet`;
+  const title =
+    `${categoryData.label}: ${baseData.label} | DreamCarpet`;
 
   const description =
     seo?.description ??
@@ -243,10 +211,11 @@ export async function generateMetadata({
     ...(seo?.keywords ?? []),
   ];
 
-  const canonicalUrl = getSubcategoryUrl(
-    category,
-    subcategory
-  );
+  const canonicalUrl =
+    getSubcategoryUrl(
+      category,
+      subcategory
+    );
 
   return {
     title,
@@ -267,34 +236,42 @@ export async function generateMetadata({
 export default async function SubcategoryPage({
   params,
 }: SubcategoryPageProps) {
-  const { category, subcategory } = await params;
+  const { category, subcategory } =
+    await params;
 
-  const settings = await getCatalogSettings();
+  const settings =
+    await getCatalogSettings();
 
-  const categoryData = settings.categories.find(
-    (item) =>
-      item.value === category &&
-      item.active
-  );
+  const categoryData =
+    settings.categories.find(
+      (item) =>
+        item.value === category &&
+        item.active
+    );
 
-  const baseData = settings.bases.find(
-    (item) =>
-      item.value === subcategory &&
-      item.category === category &&
-      item.active
-  );
+  const baseData =
+    settings.bases.find(
+      (item) =>
+        item.value === subcategory &&
+        item.category === category &&
+        item.active
+    );
 
   if (!categoryData || !baseData) {
     notFound();
   }
 
-  const products = await getAllProducts();
+  const products =
+    await getAllProducts();
 
-  const categoryProducts = products.filter(
-    (product) =>
-      String(product.category) === category &&
-      String(product.base) === subcategory
-  );
+  const categoryProducts =
+    products.filter(
+      (product) =>
+        String(product.category) ===
+          category &&
+        String(product.base) ===
+          subcategory
+    );
 
   const seo = baseSeo[subcategory];
 

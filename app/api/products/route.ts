@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
+import { supabaseAdmin } from "../../../lib/supabaseAdmin";
+
 import type {
   Product,
   ProductBase,
@@ -17,21 +19,13 @@ import type {
 
 export const runtime = "nodejs";
 
-const databaseDirectory = path.join(
+const localProductsFile = path.join(
   process.cwd(),
-  "database"
-);
-
-const databaseFile = path.join(
-  databaseDirectory,
+  "database",
   "products.json"
 );
 
-const imagesDirectory = path.join(
-  process.cwd(),
-  "public",
-  "products"
-);
+const storageBucket = "product-images";
 
 /* ================================
    ДОЗВОЛЕНІ ЗНАЧЕННЯ
@@ -251,13 +245,46 @@ function createSlug(text: string): string {
 }
 
 /* ================================
-   РОБОТА З БАЗОЮ
+   SUPABASE — ТОВАРИ
 ================================ */
 
-async function readProducts(): Promise<Product[]> {
+type ProductRow = {
+  id: number;
+  slug: string;
+  article: string;
+  data: Record<string, unknown> | null;
+};
+
+function rowToProduct(row: ProductRow): Product {
+  return {
+    ...(row.data ?? {}),
+    id: Number(row.id),
+    slug: row.slug,
+    article: row.article,
+  } as Product;
+}
+
+function productToRow(product: Product) {
+  const {
+    id,
+    slug,
+    article,
+    ...data
+  } = product;
+
+  return {
+    id,
+    slug,
+    article,
+    data,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+async function readLocalProducts(): Promise<Product[]> {
   try {
     const content = await fs.readFile(
-      databaseFile,
+      localProductsFile,
       "utf8"
     );
 
@@ -271,23 +298,99 @@ async function readProducts(): Promise<Product[]> {
   }
 }
 
-async function writeProducts(
-  products: Product[]
-): Promise<void> {
-  await fs.mkdir(databaseDirectory, {
-    recursive: true,
-  });
+async function seedProductsIfEmpty() {
+  const { count, error: countError } =
+    await supabaseAdmin
+      .from("products")
+      .select("id", {
+        count: "exact",
+        head: true,
+      });
 
-  await fs.writeFile(
-    databaseFile,
-    JSON.stringify(products, null, 2),
-    "utf8"
+  if (countError) {
+    throw countError;
+  }
+
+  if ((count ?? 0) > 0) {
+    return;
+  }
+
+  const localProducts = await readLocalProducts();
+
+  if (localProducts.length === 0) {
+    return;
+  }
+
+  const rows = localProducts.map(productToRow);
+
+  const { error } = await supabaseAdmin
+    .from("products")
+    .upsert(rows, {
+      onConflict: "id",
+    });
+
+  if (error) {
+    throw error;
+  }
+}
+
+async function readProducts(): Promise<Product[]> {
+  await seedProductsIfEmpty();
+
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("id, slug, article, data")
+    .order("id", {
+      ascending: true,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []).map((row) =>
+    rowToProduct(row as ProductRow)
   );
 }
 
 /* ================================
-   ФОТО
+   SUPABASE STORAGE — ФОТО
 ================================ */
+
+async function ensureStorageBucket() {
+  const { data: bucket } =
+    await supabaseAdmin.storage.getBucket(
+      storageBucket
+    );
+
+  if (bucket) {
+    return;
+  }
+
+  const { error } =
+    await supabaseAdmin.storage.createBucket(
+      storageBucket,
+      {
+        public: true,
+        fileSizeLimit: 10 * 1024 * 1024,
+        allowedMimeTypes: [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/avif",
+        ],
+      }
+    );
+
+  if (
+    error &&
+    !error.message
+      .toLowerCase()
+      .includes("already exists")
+  ) {
+    throw error;
+  }
+}
 
 function safeFileName(fileName: string): string {
   const extension = path
@@ -314,10 +417,6 @@ function safeFileName(fileName: string): string {
 async function saveUploadedImages(
   formData: FormData
 ): Promise<string[]> {
-  await fs.mkdir(imagesDirectory, {
-    recursive: true,
-  });
-
   const files = formData
     .getAll("images")
     .filter(
@@ -326,7 +425,13 @@ async function saveUploadedImages(
         value.size > 0
     );
 
-  const imagePaths: string[] = [];
+  if (files.length === 0) {
+    return [];
+  }
+
+  await ensureStorageBucket();
+
+  const imageUrls: string[] = [];
 
   for (const file of files) {
     if (!file.type.startsWith("image/")) {
@@ -335,38 +440,78 @@ async function saveUploadedImages(
 
     const fileName = safeFileName(file.name);
 
-    const filePath = path.join(
-      imagesDirectory,
-      fileName
-    );
+    const storagePath = `products/${fileName}`;
 
     const buffer = Buffer.from(
       await file.arrayBuffer()
     );
 
-    await fs.writeFile(filePath, buffer);
+    const { error } =
+      await supabaseAdmin.storage
+        .from(storageBucket)
+        .upload(storagePath, buffer, {
+          contentType:
+            file.type || "application/octet-stream",
+          upsert: false,
+        });
 
-    imagePaths.push(`/products/${fileName}`);
+    if (error) {
+      throw error;
+    }
+
+    const { data } =
+      supabaseAdmin.storage
+        .from(storageBucket)
+        .getPublicUrl(storagePath);
+
+    imageUrls.push(data.publicUrl);
   }
 
-  return imagePaths;
+  return imageUrls;
+}
+
+function getStoragePath(
+  imageUrl: string
+): string | null {
+  try {
+    const marker =
+      `/storage/v1/object/public/${storageBucket}/`;
+
+    const index = imageUrl.indexOf(marker);
+
+    if (index === -1) {
+      return null;
+    }
+
+    return decodeURIComponent(
+      imageUrl.slice(index + marker.length)
+    );
+  } catch {
+    return null;
+  }
 }
 
 async function deleteImage(
   imageUrl: string
 ): Promise<void> {
-  try {
-    if (!imageUrl.startsWith("/products/")) {
-      return;
-    }
+  const storagePath = getStoragePath(imageUrl);
 
-    const fileName = path.basename(imageUrl);
+  if (!storagePath) {
+    // Старі локальні /products/... фото не видаляємо:
+    // на Vercel вони read-only.
+    return;
+  }
 
-    await fs.unlink(
-      path.join(imagesDirectory, fileName)
+  const { error } =
+    await supabaseAdmin.storage
+      .from(storageBucket)
+      .remove([storagePath]);
+
+  if (error) {
+    console.error(
+      "Supabase delete image error:",
+      error
     );
-  } catch {
-    // Фото вже може не існувати.
   }
 }
 
@@ -682,9 +827,23 @@ function validateProduct(
 ================================ */
 
 export async function GET() {
-  const products = await readProducts();
+  try {
+    const products = await readProducts();
 
-  return NextResponse.json(products);
+    return NextResponse.json(products);
+  } catch (error) {
+    console.error("GET products error:", error);
+
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Не вдалося завантажити товари",
+      },
+      { status: 500 }
+    );
+  }
 }
 
 /* ================================
@@ -738,9 +897,13 @@ export async function POST(request: Request) {
       images,
     };
 
-    products.push(newProduct);
+    const { error } = await supabaseAdmin
+      .from("products")
+      .insert(productToRow(newProduct));
 
-    await writeProducts(products);
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json(
       {
@@ -798,20 +961,16 @@ export async function PUT(request: Request) {
 
     const products = await readProducts();
 
-    const productIndex =
-      products.findIndex(
-        (product) => product.id === id
-      );
+    const oldProduct = products.find(
+      (product) => product.id === id
+    );
 
-    if (productIndex === -1) {
+    if (!oldProduct) {
       return NextResponse.json(
         { message: "Товар не знайдено" },
         { status: 404 }
       );
     }
-
-    const oldProduct =
-      products[productIndex];
 
     const existingImages = formData
       .getAll("existingImages")
@@ -819,7 +978,7 @@ export async function PUT(request: Request) {
       .filter(Boolean);
 
     const removedImages =
-      oldProduct.images.filter(
+      (oldProduct.images ?? []).filter(
         (image) =>
           !existingImages.includes(image)
       );
@@ -835,10 +994,6 @@ export async function PUT(request: Request) {
       createSlug(data.name) ||
       `product-${id}`;
 
-    /*
-      При редагуванні старий артикул
-      залишається незмінним.
-    */
     const article =
       normalizeArticle(
         oldProduct.article ?? ""
@@ -856,10 +1011,14 @@ export async function PUT(request: Request) {
       ],
     };
 
-    products[productIndex] =
-      updatedProduct;
+    const { error } = await supabaseAdmin
+      .from("products")
+      .update(productToRow(updatedProduct))
+      .eq("id", id);
 
-    await writeProducts(products);
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({
       message: "Товар успішно оновлено",
@@ -921,12 +1080,14 @@ export async function DELETE(
       await deleteImage(image);
     }
 
-    const updatedProducts =
-      products.filter(
-        (item) => item.id !== id
-      );
+    const { error } = await supabaseAdmin
+      .from("products")
+      .delete()
+      .eq("id", id);
 
-    await writeProducts(updatedProducts);
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({
       message: "Товар успішно видалено",

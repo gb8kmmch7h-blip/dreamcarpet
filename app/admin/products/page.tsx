@@ -2473,6 +2473,18 @@ export default function AdminProductsPage() {
         }
 
         @media (max-width: 950px) {
+          .admin-page {
+            width: 100%;
+            overflow-x: hidden;
+            box-sizing: border-box;
+            padding: 18px 10px 50px;
+          }
+
+          .admin-container {
+            width: 100%;
+            min-width: 0;
+          }
+
           .page-header,
           .toolbar,
           .images-section,
@@ -2481,14 +2493,186 @@ export default function AdminProductsPage() {
             align-items: stretch;
           }
 
+          .page-header {
+            gap: 14px;
+            margin-bottom: 20px;
+          }
+
+          h1 {
+            font-size: 34px;
+          }
+
+          .subtitle {
+            font-size: 14px;
+            line-height: 1.45;
+          }
+
+          .header-actions {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .header-actions .primary-button,
+          .header-actions .secondary-button {
+            width: 100%;
+          }
+
+          .form-card {
+            padding: 16px;
+            border-radius: 18px;
+          }
+
           .form-grid,
           .checkbox-grid,
           .choice-grid {
             grid-template-columns: 1fr;
           }
 
+          .toolbar {
+            gap: 12px;
+            padding: 14px;
+          }
+
           .toolbar input {
             max-width: none;
+            width: 100%;
+          }
+
+          .products-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+
+          .product-card {
+            display: grid;
+            grid-template-columns: 130px minmax(0, 1fr);
+            min-width: 0;
+            border-radius: 16px;
+          }
+
+          .product-image {
+            width: 130px;
+            height: 100%;
+            min-height: 210px;
+            aspect-ratio: auto;
+          }
+
+          .product-content {
+            min-width: 0;
+            gap: 7px;
+            padding: 11px;
+          }
+
+          .product-topline {
+            align-items: flex-start;
+            gap: 6px;
+          }
+
+          .product-topline > span:first-child {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 11px;
+          }
+
+          .stock {
+            flex-shrink: 0;
+            padding: 5px 7px;
+            font-size: 10px;
+          }
+
+          .product-content h2 {
+            font-size: 19px;
+            line-height: 1.08;
+            overflow-wrap: anywhere;
+          }
+
+          .collection {
+            font-size: 12px;
+            overflow-wrap: anywhere;
+          }
+
+          .description {
+            display: none;
+          }
+
+          .product-details {
+            gap: 4px;
+            padding: 8px;
+            font-size: 11px;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+          }
+
+          .product-footer {
+            gap: 8px;
+            padding-top: 8px;
+          }
+
+          .product-footer strong {
+            font-size: 17px;
+          }
+
+          .card-actions {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+          }
+
+          .card-actions button {
+            width: 100%;
+            padding: 8px 6px;
+            font-size: 11px;
+          }
+
+          .badges {
+            top: 7px;
+            left: 7px;
+            gap: 4px;
+          }
+
+          .badges span {
+            padding: 5px 7px;
+            font-size: 9px;
+          }
+        }
+
+        @media (max-width: 390px) {
+          .admin-page {
+            padding-left: 7px;
+            padding-right: 7px;
+          }
+
+          h1 {
+            font-size: 30px;
+          }
+
+          .product-card {
+            grid-template-columns: 112px minmax(0, 1fr);
+          }
+
+          .product-image {
+            width: 112px;
+            min-height: 195px;
+          }
+
+          .product-content {
+            padding: 9px;
+          }
+
+          .product-content h2 {
+            font-size: 17px;
+          }
+
+          .product-details {
+            font-size: 10px;
+          }
+
+          .product-footer strong {
+            font-size: 15px;
           }
         }
       `}</style>

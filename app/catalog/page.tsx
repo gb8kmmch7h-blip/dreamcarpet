@@ -1,28 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import fs from "fs/promises";
-import path from "path";
 
 import { getAllProducts } from "../../lib/getAllProducts";
+import { getCatalogSettings } from "../../lib/getCatalogSettings";
 
 export const dynamic = "force-dynamic";
-
-type CatalogSettingItem = {
-  value: string;
-  label: string;
-  active: boolean;
-};
-
-type CatalogSettings = {
-  categories: CatalogSettingItem[];
-  bases: CatalogSettingItem[];
-};
-
-const settingsFile = path.join(
-  process.cwd(),
-  "database",
-  "catalog-settings.json"
-);
 
 const categoryDescriptions: Record<string, string> = {
   budget:
@@ -37,34 +19,6 @@ const categoryDescriptions: Record<string, string> = {
   turkey:
     "Якісні турецькі килими з виразним дизайном і щільним ворсом.",
 };
-
-async function getCatalogSettings(): Promise<CatalogSettings> {
-  try {
-    const content = await fs.readFile(
-      settingsFile,
-      "utf8"
-    );
-
-    const parsed = JSON.parse(
-      content
-    ) as CatalogSettings;
-
-    return {
-      categories: Array.isArray(parsed.categories)
-        ? parsed.categories
-        : [],
-
-      bases: Array.isArray(parsed.bases)
-        ? parsed.bases
-        : [],
-    };
-  } catch {
-    return {
-      categories: [],
-      bases: [],
-    };
-  }
-}
 
 export default async function CatalogPage() {
   const products = await getAllProducts();
