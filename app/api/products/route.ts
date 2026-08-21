@@ -358,28 +358,50 @@ async function readProducts(): Promise<Product[]> {
 ================================ */
 
 async function ensureStorageBucket() {
-  const { data: bucket } =
+  const bucketOptions = {
+    public: true,
+    fileSizeLimit: 25 * 1024 * 1024,
+    allowedMimeTypes: [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/avif",
+      "image/heic",
+      "image/heif",
+    ],
+  };
+
+  const { data: bucket, error: getBucketError } =
     await supabaseAdmin.storage.getBucket(
       storageBucket
     );
 
-  if (bucket) {
+  if (bucket && !getBucketError) {
+    const { error: updateError } =
+      await supabaseAdmin.storage.updateBucket(
+        storageBucket,
+        bucketOptions
+      );
+
+    if (updateError) {
+      console.error(
+        "Supabase update bucket error:",
+        updateError
+      );
+
+      throw new Error(
+        "Не вдалося оновити сховище фотографій"
+      );
+    }
+
     return;
   }
 
   const { error } =
     await supabaseAdmin.storage.createBucket(
       storageBucket,
-      {
-        public: true,
-        fileSizeLimit: 10 * 1024 * 1024,
-        allowedMimeTypes: [
-          "image/jpeg",
-          "image/png",
-          "image/webp",
-          "image/avif",
-        ],
-      }
+      bucketOptions
     );
 
   if (
@@ -388,7 +410,14 @@ async function ensureStorageBucket() {
       .toLowerCase()
       .includes("already exists")
   ) {
-    throw error;
+    console.error(
+      "Supabase create bucket error:",
+      error
+    );
+
+    throw new Error(
+      "Не вдалося створити сховище фотографій"
+    );
   }
 }
 
@@ -456,7 +485,14 @@ async function saveUploadedImages(
         });
 
     if (error) {
-      throw error;
+      console.error(
+        "Supabase image upload error:",
+        error
+      );
+
+      throw new Error(
+        `Не вдалося завантажити фото «${file.name}»: ${error.message}`
+      );
     }
 
     const { data } =
