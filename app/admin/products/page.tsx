@@ -520,57 +520,109 @@ export default function AdminProductsPage() {
     setError("");
   }
 
-  function handleImagesChange(
+  async function handleImagesChange(
     event: ChangeEvent<HTMLInputElement>
   ) {
+    const input = event.currentTarget;
     const files = Array.from(
-      event.target.files ?? []
+      input.files ?? []
     );
 
-    const imageExtensions = [
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".webp",
-      ".avif",
-      ".heic",
-      ".heif",
-    ];
+    input.value = "";
 
-    const validFiles = files.filter((file) => {
-      const lowerName = file.name.toLowerCase();
-
-      const hasImageMime =
-        file.type.startsWith("image/");
-
-      const hasImageExtension =
-        imageExtensions.some((extension) =>
-          lowerName.endsWith(extension)
-        );
-
-      return (
-        file.size > 0 &&
-        (hasImageMime || hasImageExtension)
-      );
-    });
-
-    if (
-      files.length > 0 &&
-      validFiles.length === 0
-    ) {
-      setError(
-        "Не вдалося розпізнати фото. Спробуй JPG, PNG, WEBP, HEIC або HEIF."
-      );
-    } else {
-      setError("");
+    if (files.length === 0) {
+      return;
     }
 
-    updateForm("newImages", [
-      ...form.newImages,
-      ...validFiles,
-    ]);
+    setError("");
 
-    event.target.value = "";
+    try {
+      const preparedFiles: File[] = [];
+
+      for (const file of files) {
+        const lowerName =
+          file.name.toLowerCase();
+
+        const isHeic =
+          file.type === "image/heic" ||
+          file.type === "image/heif" ||
+          lowerName.endsWith(".heic") ||
+          lowerName.endsWith(".heif");
+
+        if (!isHeic) {
+          if (
+            file.type.startsWith("image/") ||
+            /\.(jpg|jpeg|png|webp|avif)$/i.test(
+              file.name
+            )
+          ) {
+            preparedFiles.push(file);
+          }
+
+          continue;
+        }
+
+        /*
+          iPhone часто віддає фото як HEIC/HEIF.
+          Перетворюємо його в JPEG прямо в браузері,
+          а вже JPEG відправляємо в Supabase.
+        */
+        const heic2anyModule =
+          await import("heic2any");
+
+        const heic2any =
+          heic2anyModule.default;
+
+        const converted = await heic2any({
+          blob: file,
+          toType: "image/jpeg",
+          quality: 0.9,
+        });
+
+        const convertedBlob =
+          Array.isArray(converted)
+            ? converted[0]
+            : converted;
+
+        const baseName =
+          file.name.replace(
+            /\.(heic|heif)$/i,
+            ""
+          ) || `iphone-photo-${Date.now()}`;
+
+        const jpegFile = new File(
+          [convertedBlob],
+          `${baseName}.jpg`,
+          {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          }
+        );
+
+        preparedFiles.push(jpegFile);
+      }
+
+      if (preparedFiles.length === 0) {
+        setError(
+          "Не вдалося підготувати вибране фото. Спробуй інше зображення."
+        );
+        return;
+      }
+
+      updateForm("newImages", [
+        ...form.newImages,
+        ...preparedFiles,
+      ]);
+    } catch (conversionError) {
+      console.error(
+        "Помилка підготовки фото:",
+        conversionError
+      );
+
+      setError(
+        "Не вдалося обробити фото з телефона. Спробуй вибрати його ще раз."
+      );
+    }
   }
 
   function removeExistingImage(imageUrl: string) {
