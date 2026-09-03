@@ -527,9 +527,43 @@ export default function AdminProductsPage() {
       event.target.files ?? []
     );
 
-    const validFiles = files.filter((file) =>
-      file.type.startsWith("image/")
-    );
+    const imageExtensions = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".webp",
+      ".avif",
+      ".heic",
+      ".heif",
+    ];
+
+    const validFiles = files.filter((file) => {
+      const lowerName = file.name.toLowerCase();
+
+      const hasImageMime =
+        file.type.startsWith("image/");
+
+      const hasImageExtension =
+        imageExtensions.some((extension) =>
+          lowerName.endsWith(extension)
+        );
+
+      return (
+        file.size > 0 &&
+        (hasImageMime || hasImageExtension)
+      );
+    });
+
+    if (
+      files.length > 0 &&
+      validFiles.length === 0
+    ) {
+      setError(
+        "Не вдалося розпізнати фото. Спробуй JPG, PNG, WEBP, HEIC або HEIF."
+      );
+    } else {
+      setError("");
+    }
 
     updateForm("newImages", [
       ...form.newImages,
@@ -582,6 +616,58 @@ export default function AdminProductsPage() {
   ) {
     event.preventDefault();
 
+    if (
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+    ) {
+      document.activeElement.blur();
+    }
+
+    const trimmedName = form.name.trim();
+    const normalizedPrice = Number(
+      form.price.replace(",", ".")
+    );
+
+    const parsedWidths = form.widths
+      .split(",")
+      .map((value) =>
+        Number(value.trim().replace(",", "."))
+      )
+      .filter(
+        (value) =>
+          Number.isFinite(value) && value > 0
+      );
+
+    const parsedColors = form.colors
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (!trimmedName) {
+      setError("Вкажи назву товару");
+      return;
+    }
+
+    if (
+      !Number.isFinite(normalizedPrice) ||
+      normalizedPrice <= 0
+    ) {
+      setError("Вкажи правильну ціну");
+      return;
+    }
+
+    if (parsedWidths.length === 0) {
+      setError(
+        "Вкажи хоча б одну ширину, наприклад 0.8 або 1"
+      );
+      return;
+    }
+
+    if (parsedColors.length === 0) {
+      setError("Вкажи хоча б один колір");
+      return;
+    }
+
     try {
       setSaving(true);
       setMessage("");
@@ -590,11 +676,17 @@ export default function AdminProductsPage() {
       const formData = new FormData();
 
       if (form.id !== null) {
-        formData.append("id", String(form.id));
+        formData.append(
+          "id",
+          String(form.id)
+        );
       }
 
-      formData.append("name", form.name);
-      formData.append("category", form.category);
+      formData.append("name", trimmedName);
+      formData.append(
+        "category",
+        form.category
+      );
       formData.append("base", form.base);
       formData.append(
         "productType",
@@ -635,91 +727,212 @@ export default function AdminProductsPage() {
         formData.append("shape", form.shape);
       }
 
-      formData.append("brand", form.brand);
-      formData.append("country", form.country);
+      formData.append(
+        "brand",
+        form.brand.trim()
+      );
+
+      formData.append(
+        "country",
+        form.country.trim()
+      );
+
       formData.append(
         "collection",
-        form.collection
+        form.collection.trim()
       );
+
       formData.append(
         "description",
-        form.description
+        form.description.trim()
       );
-      formData.append("features", form.features);
-      formData.append("price", form.price);
+
+      formData.append(
+        "features",
+        form.features
+      );
+
+      formData.append(
+        "price",
+        String(normalizedPrice)
+      );
+
       formData.append(
         "priceType",
         form.priceType
       );
-      formData.append("colors", form.colors);
-      formData.append("widths", form.widths);
-      formData.append("lengths", form.lengths);
+
+      formData.append(
+        "colors",
+        parsedColors.join(", ")
+      );
+
+      formData.append(
+        "widths",
+        parsedWidths.join(", ")
+      );
+
+      formData.append(
+        "lengths",
+        form.lengths
+      );
+
       formData.append(
         "productionTime",
-        form.productionTime
+        form.productionTime.trim()
       );
+
       formData.append(
         "inStock",
         String(form.inStock)
       );
+
       formData.append(
         "featured",
         String(form.featured)
       );
-      formData.append("new", String(form.new));
-      formData.append("seoTitle", form.seoTitle);
+
+      formData.append(
+        "new",
+        String(form.new)
+      );
+
+      formData.append(
+        "seoTitle",
+        form.seoTitle
+      );
+
       formData.append(
         "seoDescription",
         form.seoDescription
       );
+
       formData.append(
         "seoKeywords",
         form.seoKeywords
       );
 
-      form.existingImages.forEach((image) => {
-        formData.append(
-          "existingImages",
-          image
-        );
-      });
-
-      form.newImages.forEach((file) => {
-        formData.append("images", file);
-      });
-
-      const isEditing = form.id !== null;
-
-      const response = await fetch(
-        "/api/products",
-        {
-          method: isEditing ? "PUT" : "POST",
-          body: formData,
+      form.existingImages.forEach(
+        (image) => {
+          formData.append(
+            "existingImages",
+            image
+          );
         }
       );
 
-      const data = (await response.json()) as {
+      form.newImages.forEach((file) => {
+        formData.append(
+          "images",
+          file,
+          file.name
+        );
+      });
+
+      const isEditing =
+        form.id !== null;
+
+      const response = await fetch(
+        `/api/products?t=${Date.now()}`,
+        {
+          method:
+            isEditing ? "PUT" : "POST",
+          body: formData,
+          cache: "no-store",
+          credentials: "same-origin",
+        }
+      );
+
+      const responseText =
+        await response.text();
+
+      let data: {
         message?: string;
-      };
+        product?: Product;
+      } = {};
+
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText) as {
+            message?: string;
+            product?: Product;
+          };
+        } catch {
+          throw new Error(
+            `Сервер повернув неправильну відповідь (${response.status})`
+          );
+        }
+      }
 
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Не вдалося зберегти товар"
+            `Не вдалося зберегти товар (${response.status})`
         );
       }
 
+      if (!data.product?.id) {
+        throw new Error(
+          "Сервер відповів, що товар збережено, але не повернув ID товару"
+        );
+      }
+
+      const verifyResponse = await fetch(
+        `/api/products?verify=${Date.now()}`,
+        {
+          method: "GET",
+          cache: "no-store",
+          credentials: "same-origin",
+        }
+      );
+
+      if (!verifyResponse.ok) {
+        throw new Error(
+          "Товар записався, але не вдалося перевірити його в базі"
+        );
+      }
+
+      const verifyData =
+        (await verifyResponse.json()) as
+          | Product[]
+          | {
+              products?: Product[];
+            };
+
+      const verifiedProducts =
+        Array.isArray(verifyData)
+          ? verifyData
+          : Array.isArray(
+                verifyData.products
+              )
+            ? verifyData.products
+            : [];
+
+      const savedProduct =
+        verifiedProducts.find(
+          (product) =>
+            Number(product.id) ===
+            Number(data.product?.id)
+        );
+
+      if (!savedProduct) {
+        throw new Error(
+          "Сервер відповів «збережено», але товар не знайдено в Supabase"
+        );
+      }
+
+      setProducts(verifiedProducts);
+
       setMessage(
-        data.message ||
-          (isEditing
-            ? "Товар оновлено"
-            : "Товар додано")
+        `${isEditing ? "Товар оновлено" : "Товар додано"}: ${savedProduct.name} (${savedProduct.article})${
+          savedProduct.inStock
+            ? ""
+            : " — УВАГА: товар позначений «Немає в наявності»"
+        }`
       );
 
       setForm(emptyForm);
       setFormOpen(false);
-
-      await loadProducts();
     } catch (requestError) {
       setError(
         requestError instanceof Error
